@@ -43,9 +43,11 @@ export function DesktopSidebar() {
   )
 
   return (
-    /* Outer slot stays a constant w-56 so collapsing never resizes the main
-       column — only the rail inside it shrinks, sliding the icons left. */
-    <aside className="hidden md:flex h-screen sticky top-0 shrink-0 w-56 z-30">
+    /* Outer slot stays a constant w-56 so collapsing never resizes or moves
+       the main column. justify-end keeps the rail pinned to the slot's inner
+       edge, so on collapse the icons slide right to hug the content and the
+       freed space opens up on the far left. */
+    <aside className="hidden md:flex justify-end h-screen sticky top-0 shrink-0 w-56 z-30">
       <div
         className={cn(
           'flex flex-col h-full py-3 transition-all duration-300 ease-in-out overflow-hidden',
