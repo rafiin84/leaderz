@@ -1,0 +1,13 @@
+{
+  "slate": [
+    {
+      "name": "leaderz",
+      "source": "/Users/harsh-5359/Documents/Coding/leaderz",
+      "build": {
+        "installCommand": "npm install",
+        "buildCommand": "npm run build",
+        "buildPath": "out"
+      }
+    }
+  ]
+}
