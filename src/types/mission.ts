@@ -188,3 +188,48 @@ export interface Opportunity extends Timestamps {
   tags: string[]
   status: 'open' | 'closed' | 'upcoming'
 }
+
+/** Everything we could read out of an uploaded photo's EXIF block. Every field
+ *  is optional — most photos carry only a subset, and images stripped by a
+ *  messaging app or a screenshot carry none at all. */
+export interface PhotoMetadata {
+  /** EXIF DateTimeOriginal — when the shutter fired, as an ISO string. */
+  capturedAt?: string
+  /** File's own last-modified time, as a fallback when EXIF has no date. */
+  fileModifiedAt?: string
+  latitude?: number
+  longitude?: number
+  altitude?: number
+  /** Reverse-geocoded place name for the coordinates above. */
+  placeName?: string
+  /** Where the coordinates came from — the photo itself, or the device. */
+  locationSource?: 'exif' | 'device' | 'manual'
+  cameraMake?: string
+  cameraModel?: string
+  lensModel?: string
+  orientation?: number
+  width?: number
+  height?: number
+  /** Shot settings, pre-formatted for display (e.g. "1/125s", "f/1.8"). */
+  exposureTime?: string
+  fNumber?: string
+  iso?: number
+  focalLength?: string
+  fileName?: string
+  fileSize?: number
+  mimeType?: string
+}
+
+/** A field report posted against the mission, with its photo and metadata. */
+export interface MissionUpdate extends Timestamps {
+  id: ID
+  tenantId: ID
+  missionId: ID
+  authorName: string
+  authorAvatar?: string
+  note?: string
+  topicId?: ID
+  topicName?: string
+  photo?: MediaItem
+  metadata?: PhotoMetadata
+}

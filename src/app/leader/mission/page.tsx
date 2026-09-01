@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
-import { useMission, useInitiatives, useEvents, useProjects } from '@/queries'
+import { useMission, useInitiatives, useEvents, useProjects, useMissionUpdates, useRemoveMissionUpdate } from '@/queries'
 import { InitiativeCard } from '@/components/mission/InitiativeCard'
+import { MissionPhotoComposer } from '@/components/mission/MissionPhotoComposer'
+import { MissionUpdateCard } from '@/components/mission/MissionUpdateCard'
 import { OpportunityCard } from '@/components/opportunities/OpportunityCard'
 import { Skeleton } from '@/components/common/Skeleton'
 import { formatNumber, formatCurrency } from '@/lib/formatting'
@@ -16,6 +18,8 @@ export default function MissionPage() {
   const { data: initiatives } = useInitiatives(activeTenantId)
   const { data: events } = useEvents(activeTenantId)
   const { data: projects } = useProjects(activeTenantId)
+  const { data: updates } = useMissionUpdates(activeTenantId)
+  const removeUpdate = useRemoveMissionUpdate(activeTenantId)
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
 
   if (isLoading || !mission) {
@@ -68,6 +72,25 @@ export default function MissionPage() {
             <p className="text-xs text-muted-foreground leading-relaxed italic">{mission.vision}</p>
           </div>
         </motion.div>
+
+        {/* Field updates — post mission information with a photo */}
+        <section aria-label="Field updates">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Field updates</h2>
+          <MissionPhotoComposer />
+
+          {updates && updates.length > 0 ? (
+            <div className="mt-4 space-y-4">
+              {updates.map(u => (
+                <MissionUpdateCard key={u.id} update={u} onRemove={removeUpdate} />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Take or choose a photo to log a field update. Location, capture time and camera
+              details are read from the photo automatically where available.
+            </p>
+          )}
+        </section>
 
         {/* Topics */}
         <section>
