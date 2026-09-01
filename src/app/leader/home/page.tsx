@@ -18,7 +18,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-xl font-bold">Home</h1>
           <div className="flex items-center gap-0.5">
