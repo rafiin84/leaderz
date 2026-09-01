@@ -4,16 +4,18 @@ import { useAppStore } from '@/stores/appStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useLeader } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
+import { cn } from '@/lib/utils'
 
-const ACTIONS: { icon: React.ElementType; label: string }[] = [
+/** `wide` actions are dropped on narrow screens so the row never outgrows the column. */
+const ACTIONS: { icon: React.ElementType; label: string; wide?: boolean }[] = [
   { icon: Image, label: 'Add photo' },
   { icon: Gif, label: 'Add GIF' },
   { icon: Barbell, label: 'Add poll' },
   { icon: ListChecks, label: 'Add list' },
   { icon: Smiley, label: 'Add emoji' },
-  { icon: CalendarPlus, label: 'Schedule' },
-  { icon: MapPin, label: 'Tag location' },
-  { icon: Flag, label: 'Link mission' },
+  { icon: CalendarPlus, label: 'Schedule', wide: true },
+  { icon: MapPin, label: 'Tag location', wide: true },
+  { icon: Flag, label: 'Link mission', wide: true },
 ]
 
 /**
@@ -40,15 +42,18 @@ export function InlineComposer() {
           </button>
 
           <div className="flex items-center justify-between gap-2 mt-2">
-            <div className="flex items-center -ml-2">
-              {ACTIONS.map(({ icon: Icon, label }) => (
+            <div className="flex items-center -ml-2 min-w-0">
+              {ACTIONS.map(({ icon: Icon, label, wide }) => (
                 <button
                   key={label}
                   type="button"
                   onClick={open}
                   title={label}
                   aria-label={label}
-                  className="p-2 rounded-full text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-colors"
+                  className={cn(
+                    'p-2 rounded-full text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-colors',
+                    wide ? 'hidden sm:inline-flex' : 'inline-flex'
+                  )}
                 >
                   <Icon size={19} />
                 </button>

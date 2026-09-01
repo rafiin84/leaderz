@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   House, FilmStrip, AddressBook, User, Target, CalendarBlank,
-  Briefcase, Star, Bell, Gear, Users, PencilSimple, CaretLeft, CaretRight
+  Briefcase, Star, Gear, Users, PencilSimple, CaretLeft, CaretRight
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
-import { useNotifications } from '@/queries'
 import { useAppStore } from '@/stores/appStore'
 import { useLeader } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
@@ -29,10 +28,8 @@ export function DesktopSidebar() {
   const [collapsed, setCollapsed] = useState(true)
   const pathname = usePathname()
   const { activeTenantId } = useAppStore()
-  const { data: notifications } = useNotifications(activeTenantId)
   const { data: leader } = useLeader(activeTenantId)
-  const { setPostComposerOpen, setNotificationsPanelOpen } = useUIStore()
-  const unread = notifications?.filter(n => !n.read).length ?? 0
+  const { setPostComposerOpen } = useUIStore()
 
   const itemClass = (active: boolean) => cn(
     'flex items-center rounded-full transition-colors duration-150',
@@ -43,11 +40,15 @@ export function DesktopSidebar() {
   )
 
   return (
-    /* Outer slot stays a constant w-56 so collapsing never resizes or moves
-       the main column. justify-end keeps the rail pinned to the slot's inner
-       edge, so on collapse the icons slide right to hug the content and the
-       freed space opens up on the far left. */
-    <aside className="hidden md:flex justify-end h-screen sticky top-0 shrink-0 w-56 z-30">
+    /* The slot tracks the rail's own width so no dead space is left behind —
+       the layout wrapper centres rail + content + right panel as one unit,
+       and the content column keeps a fixed width either way. */
+    <aside
+      className={cn(
+        'hidden md:flex h-screen sticky top-0 shrink-0 z-30 transition-all duration-300 ease-in-out',
+        collapsed ? 'w-[72px]' : 'w-56'
+      )}
+    >
       <div
         className={cn(
           'flex flex-col h-full py-3 transition-all duration-300 ease-in-out overflow-hidden',
@@ -70,26 +71,6 @@ export function DesktopSidebar() {
             {collapsed ? <CaretRight size={15} weight="bold" /> : <CaretLeft size={15} weight="bold" />}
           </button>
         </div>
-
-        {/* Notifications bell */}
-        <button
-          onClick={() => setNotificationsPanelOpen(true)}
-          title="Notifications"
-          className={cn(
-            'relative flex items-center rounded-full text-[15px] font-normal text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors',
-            collapsed ? 'justify-center p-2.5 w-10 mx-auto mb-0.5' : 'gap-3 px-3 py-2.5 w-full mb-0'
-          )}
-        >
-          <span className="relative shrink-0">
-            <Bell size={22} weight="regular" />
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 bg-foreground text-background text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </span>
-          {!collapsed && <span>Notifications</span>}
-        </button>
 
         {/* Nav items */}
         <nav className={cn('flex-1 space-y-0.5', collapsed ? 'w-full flex flex-col items-center' : '')} aria-label="Main navigation">

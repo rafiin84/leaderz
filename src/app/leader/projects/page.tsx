@@ -32,7 +32,7 @@ export default function ProjectsPage() {
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
         <div className="flex items-center gap-3 px-4 py-3">
           <Briefcase size={20} className="text-primary" weight="fill" />
-          <h1 className="text-xl font-bold flex-1">Projects & Talent</h1>
+          <h1 className="text-xl font-bold flex-1">Companies</h1>
         </div>
       </header>
 

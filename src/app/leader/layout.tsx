@@ -7,9 +7,12 @@ import { NotificationDrawer } from '@/components/notifications/NotificationDrawe
 export default function LeaderLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex w-full max-w-[1280px] mx-auto">
+      {/* w-fit keeps the row exactly as wide as its three columns, so mx-auto
+          centres the whole design whether the sidebar is collapsed or not.
+          The content column is a fixed width, so collapsing never resizes it. */}
+      <div className="flex w-fit max-w-full mx-auto">
         <DesktopSidebar />
-        <main className="flex-1 min-w-0">
+        <main className="w-[672px] max-w-full min-w-0">
           <div className="has-bottom-nav md:pb-0">
             {children}
           </div>
