@@ -1,11 +1,11 @@
 'use client'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank } from '@phosphor-icons/react'
+import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank, Plus } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useMission, useInitiatives, useEvents, useProjects, useMissionUpdates, useRemoveMissionUpdate } from '@/queries'
 import { InitiativeCard } from '@/components/mission/InitiativeCard'
-import { MissionPhotoComposer } from '@/components/mission/MissionPhotoComposer'
+import { MissionUpdateDialog } from '@/components/mission/MissionUpdateDialog'
 import { MissionUpdateCard } from '@/components/mission/MissionUpdateCard'
 import { OpportunityCard } from '@/components/opportunities/OpportunityCard'
 import { Skeleton } from '@/components/common/Skeleton'
@@ -21,6 +21,7 @@ export default function MissionPage() {
   const { data: updates } = useMissionUpdates(activeTenantId)
   const removeUpdate = useRemoveMissionUpdate(activeTenantId)
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
 
   if (isLoading || !mission) {
     return (
@@ -51,7 +52,13 @@ export default function MissionPage() {
         <div className="flex items-center gap-3 px-4 py-3">
           <Target size={20} className="text-primary" weight="fill" />
           <h1 className="text-xl font-bold text-foreground flex-1">Mission</h1>
-          <Link href="/leader/events" className="text-xs text-primary font-medium">Events</Link>
+          <button
+            onClick={() => setUpdateDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={14} weight="bold" />
+            Add update
+          </button>
         </div>
       </header>
 
@@ -76,19 +83,23 @@ export default function MissionPage() {
         {/* Field updates — post mission information with a photo */}
         <section aria-label="Field updates">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Field updates</h2>
-          <MissionPhotoComposer />
-
           {updates && updates.length > 0 ? (
-            <div className="mt-4 space-y-4">
+            <div className="space-y-4">
               {updates.map(u => (
                 <MissionUpdateCard key={u.id} update={u} onRemove={removeUpdate} />
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Take or choose a photo to log a field update. Location, capture time and camera
-              details are read from the photo automatically where available.
-            </p>
+            <button
+              onClick={() => setUpdateDialogOpen(true)}
+              className="w-full rounded-2xl border border-dashed p-5 text-left hover:bg-muted/40 transition-colors"
+            >
+              <p className="text-sm font-medium text-foreground">Log a field update</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Take or choose a photo — location, capture time and camera details are read
+                from the photo automatically where available.
+              </p>
+            </button>
           )}
         </section>
 
@@ -213,6 +224,8 @@ export default function MissionPage() {
           </section>
         )}
       </div>
+
+      <MissionUpdateDialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} />
     </div>
   )
 }

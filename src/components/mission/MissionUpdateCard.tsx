@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 import { Trash } from '@phosphor-icons/react'
 import { Avatar } from '@/components/common/Avatar'
-import { PhotoMetadataList } from './MissionPhotoComposer'
+import { PhotoMetadataList } from './MissionUpdateDialog'
 import { formatRelativeTime } from '@/lib/formatting'
 import { formatFileSize } from '@/lib/photoMetadata'
 import type { MissionUpdate } from '@/types/mission'
