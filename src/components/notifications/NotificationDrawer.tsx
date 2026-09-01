@@ -62,7 +62,7 @@ export function NotificationDrawer() {
                 return (
                   <div
                     key={n.id}
-                    className={`flex items-start gap-3.5 px-5 py-4 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-default ${!n.read ? 'bg-foreground/[0.025]' : ''}`}
+                    className={`flex items-start gap-3.5 px-5 py-4 border-b border-border hover:bg-muted/30 transition-colors cursor-default ${!n.read ? 'bg-foreground/[0.025]' : ''}`}
                   >
                     <div className={`mt-0.5 shrink-0 ${cfg.color}`}>
                       <Icon size={18} weight="fill" />

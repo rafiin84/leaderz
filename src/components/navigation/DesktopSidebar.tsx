@@ -99,7 +99,7 @@ export function DesktopSidebar() {
         </button>
 
         {/* Settings + Profile */}
-        <div className={cn('border-t border-border/50 pt-3 space-y-0.5', collapsed ? 'w-full flex flex-col items-center' : '')}>
+        <div className={cn('border-t border-border pt-3 space-y-0.5', collapsed ? 'w-full flex flex-col items-center' : '')}>
           <Link
             href="/leader/settings"
             title={collapsed ? 'Settings' : undefined}

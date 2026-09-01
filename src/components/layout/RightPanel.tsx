@@ -47,7 +47,7 @@ export function RightPanel() {
   const pendingFollowUps = (followUps ?? []).slice(0, 2)
 
   return (
-    <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen py-6 pl-6 pr-3 overflow-y-auto scrollbar-none border-l border-border/50">
+    <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen py-6 pl-6 pr-3 overflow-y-auto scrollbar-none border-l border-border">
 
       {/* Today's briefing */}
       {briefing.length > 0 && (

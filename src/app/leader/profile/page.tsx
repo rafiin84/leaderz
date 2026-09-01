@@ -129,7 +129,7 @@ export default function ProfilePage() {
               <button
                 key={value}
                 onClick={() => setTheme(value as 'light' | 'dark' | 'system')}
-                className={cn('flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-all', theme === value ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted')}
+                className={cn('flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-all', theme === value ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-border hover:bg-muted')}
               >
                 <Icon size={18} />
                 <span className="text-xs font-medium">{label}</span>

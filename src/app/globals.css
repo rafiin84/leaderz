@@ -20,8 +20,8 @@
   --accent-foreground: oklch(0.30 0.10 152);
   --destructive: oklch(0.55 0.22 29);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.91 0.005 250);
-  --input: oklch(0.91 0.005 250);
+  --border: oklch(0.961 0.0045 214); /* X light divider #eff3f4 */
+  --input: oklch(0.91 0.005 250);  /* form outlines stay darker than dividers */
   --ring: oklch(0.34 0.10 152);
   --radius: 0.75rem;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -48,8 +48,8 @@
   --accent-foreground: oklch(0.75 0.12 152);
   --destructive: oklch(0.60 0.20 29);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.22 0.01 250);
-  --input: oklch(0.22 0.01 250);
+  --border: oklch(0.318 0.0077 240); /* X dark divider #2f3336 */
+  --input: oklch(0.318 0.0077 240);
   --ring: oklch(0.55 0.15 152);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
@@ -112,7 +112,7 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--border) 80%, transparent); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--muted-foreground) 30%, transparent); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 /* Bottom nav spacer */
