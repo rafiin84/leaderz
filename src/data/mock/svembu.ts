@@ -8,6 +8,12 @@ import type { Post } from '@/types/content'
  * the tweet's snowflake id. Engagement figures (reactions, comments, shares,
  * views) are NOT real: X does not expose them without an API key, so they are
  * illustrative placeholders like the rest of the mock data in this folder.
+ *
+ * Entries ending in an ellipsis are excerpts of longer threads, not the full
+ * post — the "View on X" link on each card goes to the complete original.
+ *
+ * This is a hand-verified sample, NOT his full timeline. To load the real
+ * archive see scripts/import-x-posts.mjs.
  */
 
 const AVATAR = '/sridhar.avif'
@@ -135,5 +141,79 @@ export const SVEMBU_POSTS: Post[] = [
     viewCount: 357000,
     createdAt: '2020-01-17T00:00:00Z',
     updatedAt: '2020-01-17T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1990629835086180435',
+    sourceUrl: 'https://x.com/svembu/status/1990629835086180435',
+    text: 'Please update the Arattai app from the Play Store/App Store and please encourage your contacts to do so. The end to end encryption will be enabled Tuesday night IST…',
+    topicName: 'Rural Engineering',
+    reactions: engagement(18900, 5200, 2400, 3100),
+    commentCount: 812,
+    shareCount: 3400,
+    viewCount: 1120000,
+    createdAt: '2025-11-18T00:00:00Z',
+    updatedAt: '2025-11-18T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1975425916403916859',
+    sourceUrl: 'https://x.com/svembu/status/1975425916403916859',
+    text: 'Even as our Arattai team is scaling up and fine tuning the product, our other product teams are hard at work. Last year Zoho became an RBI authorized payment aggregator in India and launched our online payment solutions…',
+    reactions: engagement(14200, 4100, 2600, 2200),
+    commentCount: 486,
+    shareCount: 2100,
+    viewCount: 743000,
+    createdAt: '2025-10-07T00:00:00Z',
+    updatedAt: '2025-10-07T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1974620561222652163',
+    sourceUrl: 'https://x.com/svembu/status/1974620561222652163',
+    text: 'Arattai is on the surface a simple product but it has a lot of depth inside. Let me list the engineering frameworks (all homegrown) that power Arattai…',
+    reactions: engagement(21600, 6800, 4900, 2800),
+    commentCount: 934,
+    shareCount: 5200,
+    viewCount: 1460000,
+    createdAt: '2025-10-04T00:00:00Z',
+    updatedAt: '2025-10-04T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1972885856613437501',
+    sourceUrl: 'https://x.com/svembu/status/1972885856613437501',
+    text: 'There are questions about where Zoho is developed and where the data is hosted and who hosts it. There is a lot of false information we want to correct. 1. All the products are developed in India…',
+    reactions: engagement(26400, 7900, 5600, 4100),
+    commentCount: 1180,
+    shareCount: 6900,
+    viewCount: 1870000,
+    createdAt: '2025-09-30T00:00:00Z',
+    updatedAt: '2025-09-30T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1972429032282312776',
+    sourceUrl: 'https://x.com/svembu/status/1972429032282312776',
+    text: 'We understand the push for Zoho to go public. But let me state the reality: Arattai would very likely not have been built by a public company that faces quarter to quarter financial pressure…',
+    reactions: engagement(31800, 9400, 7100, 5300),
+    commentCount: 1420,
+    shareCount: 8100,
+    viewCount: 2260000,
+    createdAt: '2025-09-28T00:00:00Z',
+    updatedAt: '2025-09-28T00:00:00Z',
+  },
+  {
+    ...base,
+    id: 'x-1902904032676720903',
+    sourceUrl: 'https://x.com/svembu/status/1902904032676720903',
+    text: '…we cannot forget the foundations. That is the Ulaa browser, Arattai messaging software. Then getting deeper still, compilers, databases, operating systems, PCs, servers, network equipment…',
+    topicName: 'Rural Engineering',
+    reactions: engagement(11400, 3600, 3900, 1800),
+    commentCount: 402,
+    shareCount: 2300,
+    viewCount: 596000,
+    createdAt: '2025-03-21T00:00:00Z',
+    updatedAt: '2025-03-21T00:00:00Z',
   },
 ]

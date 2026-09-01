@@ -92,7 +92,18 @@ export function PostCard({ post }: Props) {
         <div className={cn('overflow-hidden', post.media.length > 1 ? 'grid grid-cols-2 gap-0.5' : '')}>
           {post.media.slice(0, 4).map((m, i) => (
             <div key={m.id} className={cn('relative overflow-hidden', post.media.length === 1 ? 'h-64' : 'h-40')}>
-              <img src={m.url} alt={m.caption ?? ''} className="w-full h-full object-cover" loading="lazy" />
+              {m.type === 'video' ? (
+                <video
+                  src={m.url}
+                  poster={m.thumbnailUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover bg-black"
+                />
+              ) : (
+                <img src={m.url} alt={m.caption ?? ''} className="w-full h-full object-cover" loading="lazy" />
+              )}
               {i === 3 && post.media.length > 4 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
