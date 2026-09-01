@@ -10,7 +10,8 @@ import type { Post } from '@/types/content'
  * illustrative placeholders like the rest of the mock data in this folder.
  *
  * Entries ending in an ellipsis are excerpts of longer threads, not the full
- * post — the "View on X" link on each card goes to the complete original.
+ * post. The `sourceUrl` field keeps the permalink to the complete original as
+ * provenance; it is no longer surfaced in the UI.
  *
  * This is a hand-verified sample, NOT his full timeline. To load the real
  * archive see scripts/import-x-posts.mjs.
