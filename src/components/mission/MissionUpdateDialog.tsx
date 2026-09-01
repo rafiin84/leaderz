@@ -52,6 +52,9 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
   const [cameraLabel, setCameraLabel] = useState<string | undefined>()
   const [deviceIds, setDeviceIds] = useState<string[]>([])
   const [deviceIndex, setDeviceIndex] = useState(0)
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'ready' | 'unavailable'>('idle')
+  // Kicked off when the camera opens so a fix is usually ready by the shutter.
+  const pendingPosition = useRef<Promise<{ latitude: number; longitude: number } | undefined> | null>(null)
 
   const libraryRef = useRef<HTMLInputElement>(null)
   const objectUrl = useRef<string | null>(null)
@@ -77,6 +80,8 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setFile(null); setPreviewUrl(null); setMeta(null)
     setNote(''); setTopicId('')
     setReading(false); setGeocoding(false); setLocating(false); setSaving(false)
+    pendingPosition.current = null
+    setGeoStatus('idle')
     onClose()
   }, [onClose, stopStream])
 
@@ -108,10 +113,7 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setReading(false)
 
     if (m.latitude !== undefined && m.longitude !== undefined) {
-      setGeocoding(true)
-      const place = await reverseGeocode(m.latitude, m.longitude)
-      setGeocoding(false)
-      if (place) setMeta(prev => (prev ? { ...prev, placeName: place } : prev))
+      await applyPlaceName(m.latitude, m.longitude)
     }
   }
 
@@ -120,11 +122,8 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     const pos = await getDeviceLocation()
     if (!pos) { setLocating(false); return }
     setMeta(prev => ({ ...(prev ?? {}), latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' }))
-    setGeocoding(true)
-    const place = await reverseGeocode(pos.latitude, pos.longitude)
-    setGeocoding(false)
     setLocating(false)
-    if (place) setMeta(prev => (prev ? { ...prev, placeName: place } : prev))
+    await applyPlaceName(pos.latitude, pos.longitude)
   }
 
   /** Opens the device camera in-page. Requires a secure context (https or
@@ -151,6 +150,13 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
         audio: false,
       })
       streamRef.current = stream
+      // A canvas snapshot cannot carry EXIF GPS, so take the device's position
+      // now — for an in-page capture that *is* where the photo is being taken.
+      if (!pendingPosition.current) {
+        setGeoStatus('locating')
+        pendingPosition.current = getDeviceLocation()
+        pendingPosition.current.then(p => setGeoStatus(p ? 'ready' : 'unavailable'))
+      }
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play().catch(() => {})
@@ -182,6 +188,14 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setCameraStarting(false)
   }
 
+  /** Reverse-geocodes a position onto the current draft's metadata. */
+  async function applyPlaceName(lat: number, lon: number) {
+    setGeocoding(true)
+    const place = await reverseGeocode(lat, lon)
+    setGeocoding(false)
+    if (place) setMeta(prev => (prev ? { ...prev, placeName: place } : prev))
+  }
+
   async function switchCamera() {
     if (deviceIds.length < 2) return
     const next = (deviceIndex + 1) % deviceIds.length
@@ -208,15 +222,26 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
       type: 'image/jpeg',
       lastModified: shotAt.getTime(),
     })
+    // Resolve the position before tearing the camera down; if the request was
+    // never started (or is still in flight) this awaits it now.
+    const positionPromise = pendingPosition.current ?? getDeviceLocation()
     closeCamera()
     await onPick(captured)
+
+    const pos = await positionPromise
     setMeta(prev => ({
       ...(prev ?? {}),
       capturedAt: shotAt.toISOString(),
       cameraModel: prev?.cameraModel ?? cameraLabel,
       width: prev?.width ?? canvas.width,
       height: prev?.height ?? canvas.height,
+      ...(pos
+        ? { latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' as const }
+        : {}),
     }))
+    pendingPosition.current = null
+    setGeoStatus('idle')
+    if (pos) await applyPlaceName(pos.latitude, pos.longitude)
   }
 
   function clearPhoto() {
@@ -376,10 +401,18 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                           </button>
                         </div>
                       )}
-                      {cameraLabel && !cameraError && (
-                        <p className="px-3 pb-3 -mt-1 text-[11px] text-muted-foreground text-center bg-card truncate">
-                          {cameraLabel}
-                        </p>
+                      {!cameraError && (
+                        <div className="px-3 pb-3 -mt-1 bg-card">
+                          {cameraLabel && (
+                            <p className="text-[11px] text-muted-foreground text-center truncate">{cameraLabel}</p>
+                          )}
+                          {/* Tell the user up front whether a position will be attached. */}
+                          <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[11px] text-center text-muted-foreground">
+                            {geoStatus === 'locating' && <><Spinner size={11} className="animate-spin" /> Getting your location…</>}
+                            {geoStatus === 'ready' && <><Crosshair size={11} /> Location will be attached from this device</>}
+                            {geoStatus === 'unavailable' && <><WarningCircle size={11} /> Location unavailable — the photo will have no coordinates</>}
+                          </p>
+                        </div>
                       )}
                     </div>
                   )}
