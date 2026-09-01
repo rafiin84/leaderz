@@ -137,7 +137,10 @@ export function getDeviceLocation(): Promise<{ latitude: number; longitude: numb
     navigator.geolocation.getCurrentPosition(
       p => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
       () => resolve(undefined),
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
+      // maximumAge: 0 — never accept a cached fix. This position is stamped on
+      // a photo as "where it was taken", and a fix even a minute old can be a
+      // different place entirely for anyone moving between updates.
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 }
     )
   })
 }

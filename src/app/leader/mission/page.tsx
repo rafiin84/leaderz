@@ -1,12 +1,13 @@
 'use client'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank, Plus } from '@phosphor-icons/react'
+import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank, Plus, MapTrifold } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useMission, useInitiatives, useEvents, useProjects, useMissionUpdates, useRemoveMissionUpdate } from '@/queries'
 import { InitiativeCard } from '@/components/mission/InitiativeCard'
 import { MissionUpdateDialog } from '@/components/mission/MissionUpdateDialog'
 import { MissionUpdateCard } from '@/components/mission/MissionUpdateCard'
+import { MissionMapView } from '@/components/mission/MissionMapView'
 import { OpportunityCard } from '@/components/opportunities/OpportunityCard'
 import { Skeleton } from '@/components/common/Skeleton'
 import { formatNumber, formatCurrency } from '@/lib/formatting'
@@ -22,6 +23,7 @@ export default function MissionPage() {
   const removeUpdate = useRemoveMissionUpdate(activeTenantId)
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
+  const [mapViewOpen, setMapViewOpen] = useState(false)
 
   if (isLoading || !mission) {
     return (
@@ -52,6 +54,13 @@ export default function MissionPage() {
         <div className="flex items-center gap-3 px-4 py-3">
           <Target size={20} className="text-primary" weight="fill" />
           <h1 className="text-xl font-bold text-foreground flex-1">Mission</h1>
+          <button
+            onClick={() => setMapViewOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+          >
+            <MapTrifold size={14} weight="fill" />
+            Map view
+          </button>
           <button
             onClick={() => setUpdateDialogOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
@@ -226,6 +235,7 @@ export default function MissionPage() {
       </div>
 
       <MissionUpdateDialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} />
+      <MissionMapView open={mapViewOpen} onClose={() => setMapViewOpen(false)} updates={updates ?? []} />
     </div>
   )
 }

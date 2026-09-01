@@ -233,6 +233,8 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setCameraOpen(false)
     setCameraError(null)
     setCameraStarting(false)
+    pendingPosition.current = null
+    setGeoStatus('idle')
   }
 
   async function switchCamera() {
@@ -270,6 +272,9 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setActiveId(draft.id)
 
     const pos = await (pendingPosition.current ?? getDeviceLocation())
+    // Drop the warmed-up fix so the next shot re-reads the position; the
+    // browser's own maximumAge cache keeps that cheap.
+    pendingPosition.current = null
     patch(draft.id, {
       meta: {
         fileName: captured.name,
@@ -322,6 +327,8 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     urls.current = []
     setPhotos([]); setActiveId(null); setNote(''); setTopicId(''); setLimitHit(false)
     setSaving(false)
+    pendingPosition.current = null
+    setGeoStatus('idle')
     onClose()
   }
 
@@ -380,7 +387,7 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
             </div>
 
             {/* Body */}
-            <div className="overflow-y-auto px-4 py-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+            <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
               <div className="flex gap-3">
                 <Avatar src={leader?.avatarUrl} name={leader?.name ?? 'You'} size="sm" className="hidden sm:inline-flex" />
 
@@ -390,7 +397,6 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                     onChange={e => setNote(e.target.value)}
                     rows={3}
                     maxLength={1000}
-                    autoFocus
                     placeholder="Add a note about this mission update…"
                     aria-label="Mission update note"
                     className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
@@ -564,26 +570,34 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                     </div>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => openCamera()}
-                      disabled={atLimit}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
-                    >
-                      <Camera size={17} />
-                      Take photo
-                    </button>
-                    <button
-                      onClick={() => libraryRef.current?.click()}
-                      disabled={atLimit}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
-                    >
-                      <ImageIcon size={17} />
-                      Choose photos
-                    </button>
-                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* Photo actions live outside the scroll area so they are always
+                reachable — on iOS the on-screen keyboard overlays the bottom of
+                a fixed sheet rather than resizing it, which buried them. */}
+            <div className="shrink-0 border-t px-4 py-3 flex flex-wrap items-center gap-2 bg-card rounded-b-none md:rounded-b-2xl"
+                 style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+              <button
+                onClick={() => openCamera()}
+                disabled={atLimit}
+                className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
+              >
+                <Camera size={17} />
+                Take photo
+              </button>
+              <button
+                onClick={() => libraryRef.current?.click()}
+                disabled={atLimit}
+                className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
+              >
+                <ImageIcon size={17} />
+                Choose photos
+              </button>
+              {atLimit && (
+                <span className="text-[11px] text-muted-foreground ml-auto">Max {MAX_PHOTOS}</span>
+              )}
             </div>
           </motion.div>
         </>
