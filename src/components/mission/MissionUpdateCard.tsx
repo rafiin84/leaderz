@@ -3,11 +3,9 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Trash, MapPin, MapTrifold } from '@phosphor-icons/react'
 import { Avatar } from '@/components/common/Avatar'
-import { PhotoMetadataList } from './MissionUpdateDialog'
 import { PhotoLocationDialog } from './PhotoLocationDialog'
 import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '@/lib/formatting'
-import { formatFileSize } from '@/lib/photoMetadata'
 import type { MissionUpdate } from '@/types/mission'
 
 interface Props {
@@ -83,22 +81,9 @@ export function MissionUpdateCard({ update, onRemove }: Props) {
         </div>
       )}
 
-      {/* Location, time and camera details captured from the photo */}
-      {meta && (
-        <div className="px-4 py-3 border-t bg-muted/30">
-          <h4 className="text-[10px] font-semibold text-foreground/40 uppercase tracking-wider mb-2">
-            Photo details
-          </h4>
-          <PhotoMetadataList meta={meta} />
-          {(meta.fileName || meta.fileSize) && (
-            <p className="mt-2 text-[11px] text-muted-foreground truncate">
-              {meta.fileName}
-              {meta.fileSize ? ` · ${formatFileSize(meta.fileSize)}` : ''}
-              {meta.mimeType ? ` · ${meta.mimeType}` : ''}
-            </p>
-          )}
-        </div>
-      )}
+      {/* Metadata is kept on the update but not listed here — the map button
+          on the photo surfaces the location, and the composer shows the full
+          readout before posting. */}
       <PhotoLocationDialog
         open={locationOpen}
         onClose={() => setLocationOpen(false)}
