@@ -24,7 +24,9 @@ export function Avatar({ src, name, size = 'md', className, verified }: AvatarPr
   const px = { xs: 24, sm: 32, md: 40, lg: 48, xl: 64, '2xl': 96 }[size]
 
   return (
-    <span className={cn('relative inline-flex shrink-0', className)}>
+    // rounded-full on the wrapper too, so a ring/border passed via className
+    // follows the circle instead of drawing a square behind it.
+    <span className={cn('relative inline-flex shrink-0 rounded-full', className)}>
       <span className={cn('rounded-full overflow-hidden bg-primary/10 flex items-center justify-center font-semibold text-primary select-none', sizeClass)}>
         {src ? (
           <img src={src} alt={name} className="w-full h-full object-cover" loading="lazy" />

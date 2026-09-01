@@ -47,7 +47,6 @@ export default function ProfilePage() {
               name={leader?.name ?? activeTenant?.leaderName ?? ''}
               size="2xl"
               verified
-              className="ring-4 ring-background"
             />
             {isLoading ? null : (
               <div className="flex gap-2">
