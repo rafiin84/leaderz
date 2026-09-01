@@ -2,27 +2,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  House, FilmStrip, AddressBook, User, Target, CalendarBlank,
-  Briefcase, Star, Gear, Users, PencilSimple, CaretLeft, CaretRight
-} from '@phosphor-icons/react'
+import { Gear, PencilSimple, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { useLeader } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
 import { useUIStore } from '@/stores/uiStore'
+import { NAV_ITEMS } from './navItems'
 
-const NAV_ITEMS: { href: string; icon: React.ElementType; label: string }[] = [
-  { href: '/leader/home', icon: House, label: 'Home' },
-  { href: '/leader/followers', icon: Users, label: 'Followers' },
-  { href: '/leader/contacts', icon: AddressBook, label: 'Contacts' },
-  { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
-  { href: '/leader/mission', icon: Target, label: 'Mission' },
-  { href: '/leader/events', icon: CalendarBlank, label: 'Events' },
-  { href: '/leader/projects', icon: Briefcase, label: 'Companies' },
-  { href: '/leader/opportunities', icon: Star, label: 'Opportunities' },
-  { href: '/leader/profile', icon: User, label: 'Profile' },
-]
 
 export function DesktopSidebar() {
   const [collapsed, setCollapsed] = useState(true)
