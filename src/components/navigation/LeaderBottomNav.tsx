@@ -24,9 +24,6 @@ export function LeaderBottomNav() {
   const { setNotificationsPanelOpen } = useUIStore()
   const unread = notifications?.filter(n => !n.read).length ?? 0
 
-  // Close the sheet whenever navigation lands somewhere new.
-  useEffect(() => { setMoreOpen(false) }, [pathname])
-
   // Don't leave the page scrollable behind the open sheet.
   useEffect(() => {
     if (!moreOpen) return
@@ -139,7 +136,7 @@ export function LeaderBottomNav() {
             >
               <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b shrink-0">
                 {leader ? (
-                  <Link href="/leader/profile" className="flex items-center gap-3 min-w-0">
+                  <Link href="/leader/profile" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 min-w-0">
                     <Avatar src={leader.avatarUrl} name={leader.name} size="sm" />
                     <span className="min-w-0">
                       <span className="block text-sm font-bold truncate">{leader.name}</span>
