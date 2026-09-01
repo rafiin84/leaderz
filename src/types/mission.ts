@@ -220,7 +220,15 @@ export interface PhotoMetadata {
   mimeType?: string
 }
 
-/** A field report posted against the mission, with its photo and metadata. */
+/** One attached photo plus whatever metadata that particular file carried.
+ *  Metadata is per-photo: in a multi-photo update each shot can have its own
+ *  location and capture time. */
+export interface MissionPhoto {
+  media: MediaItem
+  metadata?: PhotoMetadata
+}
+
+/** A field report posted against the mission, with its photos and metadata. */
 export interface MissionUpdate extends Timestamps {
   id: ID
   tenantId: ID
@@ -230,6 +238,5 @@ export interface MissionUpdate extends Timestamps {
   note?: string
   topicId?: ID
   topicName?: string
-  photo?: MediaItem
-  metadata?: PhotoMetadata
+  photos: MissionPhoto[]
 }

@@ -3,29 +3,45 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, Image as ImageIcon, X, Spinner, Crosshair, WarningCircle,
-  ArrowsClockwise, Circle,
+  ArrowsClockwise, Circle, MapPin,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useLeader, useMission, useAddMissionUpdate } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
+import { cn } from '@/lib/utils'
 import {
   readPhotoMetadata, reverseGeocode, getDeviceLocation, formatCoords,
 } from '@/lib/photoMetadata'
-import type { MissionUpdate, PhotoMetadata } from '@/types/mission'
+import type { MissionUpdate, MissionPhoto, PhotoMetadata } from '@/types/mission'
 
 let seq = 0
 const nextId = () => `mu-${Date.now()}-${seq++}`
+
+/** Cap so a single update stays reviewable, and so we don't hold an unbounded
+ *  number of object URLs alive. */
+export const MAX_PHOTOS = 8
 
 interface Props {
   open: boolean
   onClose: () => void
 }
 
+/** One pending attachment in the composer, with its own metadata read. */
+interface Draft {
+  id: string
+  file: File
+  url: string
+  meta: PhotoMetadata | null
+  reading: boolean
+}
+
 /**
- * Modal for logging a mission field update with a photo.
+ * Modal for logging a mission field update with one or more photos.
  *
- * Photo capture is two plain file inputs — one with capture="environment" so
- * phones open the rear camera — so this needs no native app on any platform.
+ * Photos can be picked from disk (multi-select) or shot with the in-page
+ * camera, which appends rather than replaces so several can be taken in a row.
+ * Each photo carries its own metadata — location and capture time differ shot
+ * to shot.
  */
 export function MissionUpdateDialog({ open, onClose }: Props) {
   const activeTenantId = useAppStore(s => s.activeTenantId)
@@ -35,13 +51,12 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
 
   const [note, setNote] = useState('')
   const [topicId, setTopicId] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [meta, setMeta] = useState<PhotoMetadata | null>(null)
-  const [reading, setReading] = useState(false)
-  const [geocoding, setGeocoding] = useState(false)
-  const [locating, setLocating] = useState(false)
+  const [photos, setPhotos] = useState<Draft[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [geocodingIds, setGeocodingIds] = useState<string[]>([])
+  const [locatingIds, setLocatingIds] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+  const [limitHit, setLimitHit] = useState(false)
 
   // Live webcam capture. The `capture` attribute on a file input is honoured
   // only by mobile browsers — desktop ignores it and shows a file picker — so
@@ -53,13 +68,13 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
   const [deviceIds, setDeviceIds] = useState<string[]>([])
   const [deviceIndex, setDeviceIndex] = useState(0)
   const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'ready' | 'unavailable'>('idle')
-  // Kicked off when the camera opens so a fix is usually ready by the shutter.
   const pendingPosition = useRef<Promise<{ latitude: number; longitude: number } | undefined> | null>(null)
 
   const libraryRef = useRef<HTMLInputElement>(null)
-  const objectUrl = useRef<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  /** Every object URL handed out, so none leak if the draft is abandoned. */
+  const urls = useRef<string[]>([])
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -68,24 +83,24 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
   }, [])
 
   useEffect(() => () => {
-    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current)
+    urls.current.forEach(URL.revokeObjectURL)
     streamRef.current?.getTracks().forEach(t => t.stop())
   }, [])
 
-  /** Dismiss without posting — the draft and its object URL are thrown away. */
+  /** Dismiss without posting — drafts and their object URLs are thrown away. */
   const close = useCallback(() => {
     stopStream()
     setCameraOpen(false); setCameraError(null); setCameraStarting(false)
-    if (objectUrl.current) { URL.revokeObjectURL(objectUrl.current); objectUrl.current = null }
-    setFile(null); setPreviewUrl(null); setMeta(null)
+    urls.current.forEach(URL.revokeObjectURL)
+    urls.current = []
+    setPhotos([]); setActiveId(null)
     setNote(''); setTopicId('')
-    setReading(false); setGeocoding(false); setLocating(false); setSaving(false)
+    setGeocodingIds([]); setLocatingIds([]); setSaving(false); setLimitHit(false)
     pendingPosition.current = null
     setGeoStatus('idle')
     onClose()
   }, [onClose, stopStream])
 
-  // Escape to dismiss, and don't let the page scroll behind the panel.
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
@@ -98,36 +113,69 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     }
   }, [open, close])
 
-  async function onPick(picked: File | undefined) {
-    if (!picked) return
-    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current)
-    const url = URL.createObjectURL(picked)
-    objectUrl.current = url
-    setFile(picked)
-    setPreviewUrl(url)
-    setReading(true)
-    setMeta(null)
+  const patch = (id: string, next: Partial<Draft>) =>
+    setPhotos(prev => prev.map(p => (p.id === id ? { ...p, ...next } : p)))
 
-    const m = await readPhotoMetadata(picked)
-    setMeta(m)
-    setReading(false)
+  const patchMeta = (id: string, next: Partial<PhotoMetadata>) =>
+    setPhotos(prev => prev.map(p => (p.id === id ? { ...p, meta: { ...(p.meta ?? {}), ...next } } : p)))
 
-    if (m.latitude !== undefined && m.longitude !== undefined) {
-      await applyPlaceName(m.latitude, m.longitude)
-    }
+  /** Reverse-geocodes a position onto one draft. */
+  async function applyPlaceName(id: string, lat: number, lon: number) {
+    setGeocodingIds(prev => [...prev, id])
+    const place = await reverseGeocode(lat, lon)
+    setGeocodingIds(prev => prev.filter(x => x !== id))
+    if (place) patchMeta(id, { placeName: place })
   }
 
-  async function useDeviceLocation() {
-    setLocating(true)
+  /** Adds files as drafts, then reads each one's metadata independently. */
+  async function addFiles(files: File[]) {
+    const images = files.filter(f => f.type.startsWith('image/'))
+    if (!images.length) return
+
+    // Built before the state update: React may invoke an updater twice in
+    // development, which would create two object URLs per file.
+    const room = MAX_PHOTOS - photos.length
+    if (room <= 0) { setLimitHit(true); return }
+    setLimitHit(images.length > room)
+    const accepted: Draft[] = images.slice(0, room).map(file => {
+      const url = URL.createObjectURL(file)
+      urls.current.push(url)
+      return { id: nextId(), file, url, meta: null, reading: true }
+    })
+    setPhotos(prev => [...prev, ...accepted])
+
+    // Read outside the state updater so React isn't holding the queue.
+    await Promise.all(accepted.map(async d => {
+      const m = await readPhotoMetadata(d.file)
+      patch(d.id, { meta: m, reading: false })
+      setActiveId(d.id)
+      if (m.latitude !== undefined && m.longitude !== undefined) {
+        await applyPlaceName(d.id, m.latitude, m.longitude)
+      }
+    }))
+  }
+
+  async function attachDeviceLocation(id: string) {
+    setLocatingIds(prev => [...prev, id])
     const pos = await getDeviceLocation()
-    if (!pos) { setLocating(false); return }
-    setMeta(prev => ({ ...(prev ?? {}), latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' }))
-    setLocating(false)
-    await applyPlaceName(pos.latitude, pos.longitude)
+    setLocatingIds(prev => prev.filter(x => x !== id))
+    if (!pos) return
+    patchMeta(id, { latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' })
+    await applyPlaceName(id, pos.latitude, pos.longitude)
   }
 
-  /** Opens the device camera in-page. Requires a secure context (https or
-   *  localhost) and returns a clear reason when it cannot. */
+  function removePhoto(id: string) {
+    const gone = photos.find(p => p.id === id)
+    if (gone) {
+      URL.revokeObjectURL(gone.url)
+      urls.current = urls.current.filter(u => u !== gone.url)
+    }
+    const next = photos.filter(p => p.id !== id)
+    setPhotos(next)
+    if (activeId === id) setActiveId(next.at(-1)?.id ?? null)
+    setLimitHit(false)
+  }
+
   async function openCamera(id?: string) {
     setCameraError(null)
     setCameraStarting(true)
@@ -136,8 +184,8 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
       setCameraStarting(false)
       setCameraError(
         window.isSecureContext === false
-          ? 'Camera access needs a secure connection (https). Use “Choose photo” instead.'
-          : 'This browser does not support in-page camera capture. Use “Choose photo” instead.'
+          ? 'Camera access needs a secure connection (https). Use “Choose photos” instead.'
+          : 'This browser does not support in-page camera capture. Use “Choose photos” instead.'
       )
       return
     }
@@ -162,7 +210,6 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
         await videoRef.current.play().catch(() => {})
       }
       setCameraLabel(stream.getVideoTracks()[0]?.label || undefined)
-      // Device labels are only populated once permission has been granted.
       const cams = (await navigator.mediaDevices.enumerateDevices())
         .filter(d => d.kind === 'videoinput')
         .map(d => d.deviceId)
@@ -173,10 +220,10 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
       setCameraStarting(false)
       const name = (e as DOMException)?.name
       setCameraError(
-        name === 'NotAllowedError' ? 'Camera permission was denied. Allow it in your browser’s site settings, or use “Choose photo”.'
-        : name === 'NotFoundError' ? 'No camera was found on this device. Use “Choose photo” instead.'
+        name === 'NotAllowedError' ? 'Camera permission was denied. Allow it in your browser’s site settings, or use “Choose photos”.'
+        : name === 'NotFoundError' ? 'No camera was found on this device. Use “Choose photos” instead.'
         : name === 'NotReadableError' ? 'The camera is already in use by another app.'
-        : 'Could not start the camera. Use “Choose photo” instead.'
+        : 'Could not start the camera. Use “Choose photos” instead.'
       )
     }
   }
@@ -188,14 +235,6 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setCameraStarting(false)
   }
 
-  /** Reverse-geocodes a position onto the current draft's metadata. */
-  async function applyPlaceName(lat: number, lon: number) {
-    setGeocoding(true)
-    const place = await reverseGeocode(lat, lon)
-    setGeocoding(false)
-    if (place) setMeta(prev => (prev ? { ...prev, placeName: place } : prev))
-  }
-
   async function switchCamera() {
     if (deviceIds.length < 2) return
     const next = (deviceIndex + 1) % deviceIds.length
@@ -203,12 +242,13 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     await openCamera(deviceIds[next])
   }
 
-  /** Snapshot the live video into a JPEG File and run it through the normal
-   *  pipeline. A canvas capture carries no EXIF, so the shutter time and the
-   *  camera label are stamped on explicitly. */
+  /** Snapshot the live video into a JPEG and append it. The camera stays open
+   *  so several shots can be taken in a row. */
   async function capturePhoto() {
     const video = videoRef.current
     if (!video || !video.videoWidth) return
+    if (photos.length >= MAX_PHOTOS) { setLimitHit(true); return }
+
     const canvas = document.createElement('canvas')
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
@@ -217,45 +257,52 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.92))
     if (!blob) return
+
     const shotAt = new Date()
     const captured = new File([blob], `camera-${shotAt.toISOString().replace(/[:.]/g, '-')}.jpg`, {
       type: 'image/jpeg',
       lastModified: shotAt.getTime(),
     })
-    // Resolve the position before tearing the camera down; if the request was
-    // never started (or is still in flight) this awaits it now.
-    const positionPromise = pendingPosition.current ?? getDeviceLocation()
-    closeCamera()
-    await onPick(captured)
+    const url = URL.createObjectURL(captured)
+    urls.current.push(url)
+    const draft: Draft = { id: nextId(), file: captured, url, meta: null, reading: false }
+    setPhotos(prev => [...prev, draft])
+    setActiveId(draft.id)
 
-    const pos = await positionPromise
-    setMeta(prev => ({
-      ...(prev ?? {}),
-      capturedAt: shotAt.toISOString(),
-      cameraModel: prev?.cameraModel ?? cameraLabel,
-      width: prev?.width ?? canvas.width,
-      height: prev?.height ?? canvas.height,
-      ...(pos
-        ? { latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' as const }
-        : {}),
-    }))
-    pendingPosition.current = null
-    setGeoStatus('idle')
-    if (pos) await applyPlaceName(pos.latitude, pos.longitude)
+    const pos = await (pendingPosition.current ?? getDeviceLocation())
+    patch(draft.id, {
+      meta: {
+        fileName: captured.name,
+        fileSize: captured.size,
+        mimeType: captured.type,
+        capturedAt: shotAt.toISOString(),
+        cameraModel: cameraLabel,
+        width: canvas.width,
+        height: canvas.height,
+        ...(pos ? { latitude: pos.latitude, longitude: pos.longitude, locationSource: 'device' as const } : {}),
+      },
+    })
+    if (pos) await applyPlaceName(draft.id, pos.latitude, pos.longitude)
   }
 
-  function clearPhoto() {
-    if (objectUrl.current) { URL.revokeObjectURL(objectUrl.current); objectUrl.current = null }
-    setFile(null); setPreviewUrl(null); setMeta(null)
-  }
-
-  const canPost = Boolean(previewUrl || note.trim()) && !saving && !reading
+  const canPost = (photos.length > 0 || note.trim().length > 0) && !saving && !photos.some(p => p.reading)
 
   async function handlePost() {
     if (!canPost || !mission) return
     setSaving(true)
     const topic = mission.topics.find(t => t.id === topicId)
     const now = new Date().toISOString()
+    const attached: MissionPhoto[] = photos.map(p => ({
+      media: {
+        id: p.id,
+        type: 'image',
+        url: p.url,
+        caption: p.file.name,
+        width: p.meta?.width,
+        height: p.meta?.height,
+      },
+      metadata: p.meta ?? undefined,
+    }))
     const update: MissionUpdate = {
       id: nextId(),
       tenantId: activeTenantId,
@@ -265,24 +312,21 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
       note: note.trim() || undefined,
       topicId: topic?.id,
       topicName: topic?.name,
-      photo: previewUrl
-        ? { id: nextId(), type: 'image', url: previewUrl, caption: file?.name, width: meta?.width, height: meta?.height }
-        : undefined,
-      metadata: meta ?? undefined,
+      photos: attached,
       createdAt: now,
       updatedAt: now,
     }
     await new Promise(r => setTimeout(r, 400))
     addUpdate(update)
-    // Hand the object URL to the posted card rather than revoking it.
-    objectUrl.current = null
-    setFile(null); setPreviewUrl(null); setMeta(null); setNote(''); setTopicId('')
+    // Object URLs are handed to the posted card, so don't revoke them here.
+    urls.current = []
+    setPhotos([]); setActiveId(null); setNote(''); setTopicId(''); setLimitHit(false)
     setSaving(false)
     onClose()
   }
 
-  const hasCoords = meta?.latitude !== undefined && meta?.longitude !== undefined
-  const noExifDate = Boolean(meta && !meta.capturedAt)
+  const active = photos.find(p => p.id === activeId) ?? null
+  const atLimit = photos.length >= MAX_PHOTOS
 
   return (
     <AnimatePresence>
@@ -317,7 +361,14 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
               >
                 <X size={20} />
               </button>
-              <h2 className="text-sm font-semibold text-foreground">New mission update</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                New mission update
+                {photos.length > 0 && (
+                  <span className="ml-1.5 font-normal text-muted-foreground">
+                    {photos.length}/{MAX_PHOTOS}
+                  </span>
+                )}
+              </h2>
               <button
                 onClick={handlePost}
                 disabled={!canPost}
@@ -349,21 +400,16 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                     ref={libraryRef}
                     type="file"
                     accept="image/*"
+                    multiple
                     hidden
-                    onChange={e => { onPick(e.target.files?.[0]); e.target.value = '' }}
+                    onChange={e => { addFiles(Array.from(e.target.files ?? [])); e.target.value = '' }}
                   />
 
-                  {/* Live camera — works on laptops and phones alike */}
+                  {/* Live camera — stays open so several shots can be taken */}
                   {cameraOpen && (
                     <div className="mt-2 rounded-xl border overflow-hidden bg-black">
                       <div className="relative">
-                        <video
-                          ref={videoRef}
-                          playsInline
-                          muted
-                          autoPlay
-                          className="w-full max-h-64 object-cover bg-black"
-                        />
+                        <video ref={videoRef} playsInline muted autoPlay className="w-full max-h-56 object-cover bg-black" />
                         {cameraStarting && (
                           <p className="absolute inset-0 flex items-center justify-center gap-2 text-xs text-white">
                             <Spinner size={14} className="animate-spin" /> Starting camera…
@@ -393,11 +439,11 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                           )}
                           <button
                             onClick={capturePhoto}
-                            disabled={cameraStarting}
+                            disabled={cameraStarting || atLimit}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
                           >
                             <Circle size={14} weight="fill" />
-                            Capture
+                            {atLimit ? `Limit ${MAX_PHOTOS} reached` : 'Capture'}
                           </button>
                         </div>
                       )}
@@ -406,64 +452,101 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                           {cameraLabel && (
                             <p className="text-[11px] text-muted-foreground text-center truncate">{cameraLabel}</p>
                           )}
-                          {/* Tell the user up front whether a position will be attached. */}
                           <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[11px] text-center text-muted-foreground">
                             {geoStatus === 'locating' && <><Spinner size={11} className="animate-spin" /> Getting your location…</>}
                             {geoStatus === 'ready' && <><Crosshair size={11} /> Location will be attached from this device</>}
-                            {geoStatus === 'unavailable' && <><WarningCircle size={11} /> Location unavailable — the photo will have no coordinates</>}
+                            {geoStatus === 'unavailable' && <><WarningCircle size={11} /> Location unavailable — photos will have no coordinates</>}
                           </p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {previewUrl && (
-                    <div className="mt-2 rounded-xl border overflow-hidden">
-                      <div className="relative">
-                        <img src={previewUrl} alt={file?.name ?? 'Selected photo'} className="w-full max-h-64 object-cover" />
-                        <button
-                          onClick={clearPhoto}
-                          aria-label="Remove photo"
-                          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                        >
-                          <X size={14} weight="bold" />
-                        </button>
-                      </div>
-
-                      <div className="p-3 border-t bg-muted/30">
-                        {reading ? (
-                          <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Spinner size={13} className="animate-spin" /> Reading photo metadata…
-                          </p>
-                        ) : (
-                          <>
-                            <PhotoMetadataList meta={meta} geocoding={geocoding} />
-
-                            {!hasCoords && (
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <WarningCircle size={13} />
-                                  No GPS in this photo
-                                </p>
-                                <button
-                                  onClick={useDeviceLocation}
-                                  disabled={locating}
-                                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border hover:bg-muted transition-colors disabled:opacity-50"
-                                >
-                                  {locating ? <Spinner size={12} className="animate-spin" /> : <Crosshair size={12} />}
-                                  Use my current location
-                                </button>
-                              </div>
+                  {/* Thumbnail grid — tap one to inspect its metadata */}
+                  {photos.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {photos.map(p => {
+                        const hasCoords = p.meta?.latitude !== undefined
+                        return (
+                          <div key={p.id} className="relative">
+                            <button
+                              onClick={() => setActiveId(p.id)}
+                              aria-label={`Show details for ${p.file.name}`}
+                              aria-pressed={p.id === activeId}
+                              className={cn(
+                                'block w-full aspect-square rounded-lg overflow-hidden border-2 transition-colors',
+                                p.id === activeId ? 'border-primary' : 'border-transparent hover:border-border'
+                              )}
+                            >
+                              <img src={p.url} alt={p.file.name} className="w-full h-full object-cover" />
+                            </button>
+                            {p.reading ? (
+                              <span className="absolute bottom-1 left-1 p-1 rounded-full bg-black/60 text-white">
+                                <Spinner size={9} className="animate-spin" />
+                              </span>
+                            ) : (
+                              <span
+                                title={hasCoords ? 'Has location' : 'No location'}
+                                className={cn(
+                                  'absolute bottom-1 left-1 p-1 rounded-full',
+                                  hasCoords ? 'bg-primary text-primary-foreground' : 'bg-black/50 text-white/70'
+                                )}
+                              >
+                                {hasCoords ? <MapPin size={9} weight="fill" /> : <WarningCircle size={9} />}
+                              </span>
                             )}
+                            <button
+                              onClick={() => removePhoto(p.id)}
+                              aria-label={`Remove ${p.file.name}`}
+                              className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-black transition-colors"
+                            >
+                              <X size={11} weight="bold" />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
 
-                            {noExifDate && (
-                              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                                No capture date in EXIF — messaging apps and screenshots usually strip it.
+                  {limitHit && (
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Up to {MAX_PHOTOS} photos per update — extra selections were skipped.
+                    </p>
+                  )}
+
+                  {/* Metadata for the selected photo */}
+                  {active && (
+                    <div className="mt-2 p-3 rounded-xl border bg-muted/30">
+                      <p className="text-[10px] font-semibold text-foreground/40 uppercase tracking-wider mb-2 truncate">
+                        {active.file.name}
+                      </p>
+                      {active.reading ? (
+                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Spinner size={13} className="animate-spin" /> Reading photo metadata…
+                        </p>
+                      ) : (
+                        <>
+                          <PhotoMetadataList meta={active.meta} geocoding={geocodingIds.includes(active.id)} />
+                          {active.meta?.latitude === undefined && (
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <WarningCircle size={13} />
+                                No GPS in this photo
                               </p>
-                            )}
-                          </>
-                        )}
-                      </div>
+                              <button
+                                onClick={() => attachDeviceLocation(active.id)}
+                                disabled={locatingIds.includes(active.id)}
+                                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border hover:bg-muted transition-colors disabled:opacity-50"
+                              >
+                                {locatingIds.includes(active.id)
+                                  ? <Spinner size={12} className="animate-spin" />
+                                  : <Crosshair size={12} />}
+                                Use my current location
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -484,17 +567,19 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => openCamera()}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors"
+                      disabled={atLimit}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
                     >
                       <Camera size={17} />
                       Take photo
                     </button>
                     <button
                       onClick={() => libraryRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors"
+                      disabled={atLimit}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors disabled:opacity-40"
                     >
                       <ImageIcon size={17} />
-                      Choose photo
+                      Choose photos
                     </button>
                   </div>
                 </div>
