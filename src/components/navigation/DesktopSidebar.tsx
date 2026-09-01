@@ -20,13 +20,13 @@ const NAV_ITEMS: { href: string; icon: React.ElementType; label: string }[] = [
   { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
   { href: '/leader/mission', icon: Target, label: 'Mission' },
   { href: '/leader/events', icon: CalendarBlank, label: 'Events' },
-  { href: '/leader/projects', icon: Briefcase, label: 'Projects' },
+  { href: '/leader/projects', icon: Briefcase, label: 'Companies' },
   { href: '/leader/opportunities', icon: Star, label: 'Opportunities' },
   { href: '/leader/profile', icon: User, label: 'Profile' },
 ]
 
 export function DesktopSidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const pathname = usePathname()
   const { activeTenantId } = useAppStore()
   const { data: notifications } = useNotifications(activeTenantId)

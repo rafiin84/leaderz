@@ -34,6 +34,8 @@ export interface Post extends Timestamps {
   viewCount: number
   isPinned: boolean
   isFollowerPost: boolean
+  /** Permalink to the original post when it was imported from an external network (e.g. X). */
+  sourceUrl?: string
 }
 
 export interface ArticleContent {

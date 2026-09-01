@@ -60,6 +60,17 @@ export function PostCard({ post }: Props) {
                 {post.location}
               </span>
             )}
+            {post.sourceUrl && (
+              <a
+                href={post.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View on X
+              </a>
+            )}
           </div>
         </div>
       </div>
