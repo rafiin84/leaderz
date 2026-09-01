@@ -112,7 +112,14 @@ async function withPixelFallback(meta: PhotoMetadata, file: File): Promise<Photo
  * so a failure (offline, throttled, blocked) returns undefined and the UI falls
  * back to showing the raw coordinates.
  */
-export async function reverseGeocode(lat: number, lon: number, signal?: AbortSignal): Promise<string | undefined> {
+export interface GeocodeResult {
+  /** Human-readable "locality, district, state" label. */
+  placeName?: string
+  /** State on its own, so posts can be grouped by state on the map. */
+  stateName?: string
+}
+
+export async function reverseGeocode(lat: number, lon: number, signal?: AbortSignal): Promise<GeocodeResult | undefined> {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`
     const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
@@ -124,7 +131,10 @@ export async function reverseGeocode(lat: number, lon: number, signal?: AbortSig
       a.county ?? a.state_district,
       a.state,
     ].filter(Boolean)
-    return parts.length ? [...new Set(parts)].join(', ') : (json.display_name as string | undefined)
+    return {
+      placeName: parts.length ? [...new Set(parts)].join(', ') : (json.display_name as string | undefined),
+      stateName: (a.state as string | undefined) ?? undefined,
+    }
   } catch {
     return undefined
   }

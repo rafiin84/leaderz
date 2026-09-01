@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MapTrifold, WarningCircle, Spinner, CaretRight } from '@phosphor-icons/react'
-import { clusterByLocation, INDIA_BOUNDS, type LocationCluster } from '@/lib/clusterLocations'
+import { groupByState, INDIA_BOUNDS, type LocationCluster } from '@/lib/clusterLocations'
+import { SAMPLE_STATE_MARKERS } from '@/data/mock/missionMapSamples'
 import { formatRelativeTime } from '@/lib/formatting'
 import type { MissionUpdate } from '@/types/mission'
 import 'leaflet/dist/leaflet.css'
@@ -21,6 +22,7 @@ interface Pin {
   latitude: number
   longitude: number
   placeName?: string
+  stateName?: string
 }
 
 /**
@@ -38,6 +40,7 @@ export function MissionMapView({ open, onClose, updates }: Props) {
   const mapRef = useRef<import('leaflet').Map | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [selected, setSelected] = useState<LocationCluster<Pin> | null>(null)
+  const [showSamples, setShowSamples] = useState(true)
 
   const close = useCallback(() => {
     setSelected(null)
@@ -61,17 +64,29 @@ export function MissionMapView({ open, onClose, updates }: Props) {
     const out: Pin[] = []
     for (const u of updates) {
       ;(u.photos ?? []).forEach((p, i) => {
-        const { latitude, longitude, placeName } = p.metadata ?? {}
+        const { latitude, longitude, placeName, stateName } = p.metadata ?? {}
         if (latitude === undefined || longitude === undefined) return
-        out.push({ update: u, photoIndex: i, latitude, longitude, placeName })
+        out.push({ update: u, photoIndex: i, latitude, longitude, placeName, stateName })
       })
     }
     return out
   }, [updates])
 
+  // One dot per state, which is how mission activity reads nationally.
   const clusters = useMemo(
-    () => clusterByLocation(pins, p => p, p => p.placeName, 25),
+    () => groupByState(pins, p => p, p => p.stateName, p => p.placeName, 25),
     [pins]
+  )
+
+  /** Sample dots are suppressed for any state that already has real posts, so
+   *  demonstration data never sits on top of actual activity. */
+  const realStates = useMemo(
+    () => new Set(clusters.map(c => c.placeName?.toLowerCase()).filter(Boolean)),
+    [clusters]
+  )
+  const samples = useMemo(
+    () => (showSamples ? SAMPLE_STATE_MARKERS.filter(m => !realStates.has(m.stateName.toLowerCase())) : []),
+    [showSamples, realStates]
   )
 
   /** Distinct posts represented on the map (a post can pin more than once). */
@@ -83,8 +98,10 @@ export function MissionMapView({ open, onClose, updates }: Props) {
 
   // Signature keeps the map from tearing down on unrelated re-renders.
   const signature = useMemo(
-    () => clusters.map(c => `${c.latitude.toFixed(4)},${c.longitude.toFixed(4)}:${c.items.length}`).join('|'),
-    [clusters]
+    () =>
+      clusters.map(c => `${c.latitude.toFixed(4)},${c.longitude.toFixed(4)}:${c.items.length}`).join('|') +
+      '#' + samples.map(m => m.stateName).join(','),
+    [clusters, samples]
   )
 
   useEffect(() => {
@@ -126,11 +143,38 @@ export function MissionMapView({ open, onClose, updates }: Props) {
             .on('click', () => setSelected(c))
         }
 
-        if (clusters.length) {
-          map.fitBounds(clusters.map(c => [c.latitude, c.longitude] as [number, number]), {
-            padding: [48, 48],
-            maxZoom: 11,
+        // Sample dots: outlined and translucent so they read as illustrative,
+        // never as real activity. A popup says so explicitly on tap.
+        for (const m of samples) {
+          const icon = L.divIcon({
+            className: '',
+            html: `<span style="
+              display:flex;align-items:center;justify-content:center;
+              width:26px;height:26px;border-radius:9999px;
+              background:rgba(255,255,255,.9);color:#1a6b3c;
+              border:2px dashed #1a6b3c;opacity:.75;
+              font:600 11px system-ui,sans-serif;">${m.count}</span>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
           })
+          L.marker([m.latitude, m.longitude], {
+            icon,
+            title: `${m.stateName} — sample data`,
+            zIndexOffset: -500,
+          })
+            .addTo(map)
+            .bindPopup(
+              `<strong>${m.stateName}</strong><br/>${m.city}<br/>` +
+              `<span style="color:#666">Sample marker — ${m.count} illustrative posts, not real activity.</span>`
+            )
+        }
+
+        // Fit to real activity when there is any, otherwise show all of India.
+        const fitPoints = clusters.length
+          ? clusters.map(c => [c.latitude, c.longitude] as [number, number])
+          : null
+        if (fitPoints) {
+          map.fitBounds(fitPoints, { padding: [48, 48], maxZoom: 11 })
         } else {
           map.fitBounds(INDIA_BOUNDS)
         }
@@ -147,7 +191,7 @@ export function MissionMapView({ open, onClose, updates }: Props) {
       map?.remove()
       mapRef.current = null
     }
-  }, [open, signature, clusters])
+  }, [open, signature, clusters, samples])
 
   // Opening the post list shrinks the map container, which Leaflet cannot
   // detect on its own — without this the tapped marker ends up behind the list.
@@ -195,8 +239,16 @@ export function MissionMapView({ open, onClose, updates }: Props) {
                     ? 'No located posts yet'
                     : `${pinnedPostCount} post${pinnedPostCount > 1 ? 's' : ''} across ${clusters.length} location${clusters.length > 1 ? 's' : ''}`}
                   {missingCount > 0 && ` · ${missingCount} without location`}
+                  {samples.length > 0 && ` · ${samples.length} sample states`}
                 </p>
               </div>
+              <button
+                onClick={() => setShowSamples(v => !v)}
+                aria-pressed={showSamples}
+                className="shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full border hover:bg-muted transition-colors"
+              >
+                {showSamples ? 'Hide samples' : 'Show samples'}
+              </button>
               <button
                 onClick={close}
                 aria-label="Close"
@@ -218,6 +270,20 @@ export function MissionMapView({ open, onClose, updates }: Props) {
                 <p className="absolute inset-0 flex items-center justify-center gap-2 px-6 text-center text-xs text-muted-foreground">
                   <WarningCircle size={14} /> The map could not be loaded.
                 </p>
+              )}
+              {status === 'ready' && (
+                <div className="absolute bottom-2 left-2 z-[400] rounded-lg border bg-card/95 backdrop-blur-sm px-2.5 py-2 text-[11px] space-y-1 pointer-events-none">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-full bg-primary border-2 border-white shadow-sm" />
+                    <span className="text-foreground">Mission posts</span>
+                  </span>
+                  {samples.length > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-primary bg-white/90" />
+                      <span className="text-muted-foreground">Sample state</span>
+                    </span>
+                  )}
+                </div>
               )}
               {status === 'ready' && clusters.length === 0 && (
                 <div className="absolute inset-x-4 top-4 rounded-xl border bg-card/95 backdrop-blur-sm p-3 text-xs text-muted-foreground">

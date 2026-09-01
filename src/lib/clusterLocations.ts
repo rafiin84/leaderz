@@ -97,3 +97,49 @@ export const INDIA_BOUNDS: [[number, number], [number, number]] = [
   [6.5, 68.0],
   [35.7, 97.5],
 ]
+
+/**
+ * Groups geotagged items by the state they fall in, which is how the mission
+ * map presents activity: one dot per state carrying that state's count.
+ *
+ * Items whose reverse geocode produced no state fall back to proximity
+ * clustering, so a post still gets a dot when the lookup was unavailable.
+ * Each group sits at the mean position of its members, so a state's dot lands
+ * where its activity actually is rather than at an arbitrary centroid.
+ */
+export function groupByState<T>(
+  items: T[],
+  getPoint: (item: T) => GeoPoint | undefined,
+  getStateName: (item: T) => string | undefined,
+  getPlaceName: (item: T) => string | undefined,
+  fallbackRadiusKm = 25
+): LocationCluster<T>[] {
+  const byState = new Map<string, { items: T[]; latSum: number; lonSum: number }>()
+  const unplaced: T[] = []
+
+  for (const item of items) {
+    const point = getPoint(item)
+    if (!point) continue
+    const state = getStateName(item)?.trim()
+    if (!state) { unplaced.push(item); continue }
+    const bucket = byState.get(state) ?? { items: [], latSum: 0, lonSum: 0 }
+    bucket.items.push(item)
+    bucket.latSum += point.latitude
+    bucket.lonSum += point.longitude
+    byState.set(state, bucket)
+  }
+
+  const stateClusters: LocationCluster<T>[] = [...byState.entries()].map(([state, b]) => ({
+    id: `state-${state}`,
+    latitude: b.latSum / b.items.length,
+    longitude: b.lonSum / b.items.length,
+    placeName: state,
+    items: b.items,
+  }))
+
+  // Whatever had no state still deserves a dot.
+  const fallback = clusterByLocation(unplaced, getPoint, getPlaceName, fallbackRadiusKm)
+    .map((c, i) => ({ ...c, id: `unstated-${i}` }))
+
+  return [...stateClusters, ...fallback]
+}

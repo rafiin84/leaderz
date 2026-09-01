@@ -119,12 +119,15 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
   const patchMeta = (id: string, next: Partial<PhotoMetadata>) =>
     setPhotos(prev => prev.map(p => (p.id === id ? { ...p, meta: { ...(p.meta ?? {}), ...next } } : p)))
 
-  /** Reverse-geocodes a position onto one draft. */
+  /** Reverse-geocodes a position onto one draft, keeping the state separately
+   *  so the mission map can group posts by state. */
   async function applyPlaceName(id: string, lat: number, lon: number) {
     setGeocodingIds(prev => [...prev, id])
-    const place = await reverseGeocode(lat, lon)
+    const geo = await reverseGeocode(lat, lon)
     setGeocodingIds(prev => prev.filter(x => x !== id))
-    if (place) patchMeta(id, { placeName: place })
+    if (geo?.placeName || geo?.stateName) {
+      patchMeta(id, { placeName: geo.placeName, stateName: geo.stateName })
+    }
   }
 
   /** Adds files as drafts, then reads each one's metadata independently. */

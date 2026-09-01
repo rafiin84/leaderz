@@ -202,6 +202,8 @@ export interface PhotoMetadata {
   altitude?: number
   /** Reverse-geocoded place name for the coordinates above. */
   placeName?: string
+  /** State/region the coordinates fall in, used to group posts on the map. */
+  stateName?: string
   /** Where the coordinates came from — the photo itself, or the device. */
   locationSource?: 'exif' | 'device' | 'manual'
   cameraMake?: string
