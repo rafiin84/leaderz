@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, Image as ImageIcon, X, Spinner, Crosshair, WarningCircle,
+  ArrowsClockwise, Circle,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useLeader, useMission, useAddMissionUpdate } from '@/queries'
@@ -42,20 +43,42 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
   const [locating, setLocating] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const cameraRef = useRef<HTMLInputElement>(null)
+  // Live webcam capture. The `capture` attribute on a file input is honoured
+  // only by mobile browsers — desktop ignores it and shows a file picker — so
+  // opening a laptop camera needs getUserMedia and a canvas snapshot.
+  const [cameraOpen, setCameraOpen] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [cameraStarting, setCameraStarting] = useState(false)
+  const [cameraLabel, setCameraLabel] = useState<string | undefined>()
+  const [deviceIds, setDeviceIds] = useState<string[]>([])
+  const [deviceIndex, setDeviceIndex] = useState(0)
+
   const libraryRef = useRef<HTMLInputElement>(null)
   const objectUrl = useRef<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
-  useEffect(() => () => { if (objectUrl.current) URL.revokeObjectURL(objectUrl.current) }, [])
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    if (videoRef.current) videoRef.current.srcObject = null
+  }, [])
+
+  useEffect(() => () => {
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current)
+    streamRef.current?.getTracks().forEach(t => t.stop())
+  }, [])
 
   /** Dismiss without posting — the draft and its object URL are thrown away. */
   const close = useCallback(() => {
+    stopStream()
+    setCameraOpen(false); setCameraError(null); setCameraStarting(false)
     if (objectUrl.current) { URL.revokeObjectURL(objectUrl.current); objectUrl.current = null }
     setFile(null); setPreviewUrl(null); setMeta(null)
     setNote(''); setTopicId('')
     setReading(false); setGeocoding(false); setLocating(false); setSaving(false)
     onClose()
-  }, [onClose])
+  }, [onClose, stopStream])
 
   // Escape to dismiss, and don't let the page scroll behind the panel.
   useEffect(() => {
@@ -102,6 +125,98 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
     setGeocoding(false)
     setLocating(false)
     if (place) setMeta(prev => (prev ? { ...prev, placeName: place } : prev))
+  }
+
+  /** Opens the device camera in-page. Requires a secure context (https or
+   *  localhost) and returns a clear reason when it cannot. */
+  async function openCamera(id?: string) {
+    setCameraError(null)
+    setCameraStarting(true)
+    setCameraOpen(true)
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setCameraStarting(false)
+      setCameraError(
+        window.isSecureContext === false
+          ? 'Camera access needs a secure connection (https). Use “Choose photo” instead.'
+          : 'This browser does not support in-page camera capture. Use “Choose photo” instead.'
+      )
+      return
+    }
+    try {
+      stopStream()
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: id
+          ? { deviceId: { exact: id } }
+          : { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play().catch(() => {})
+      }
+      setCameraLabel(stream.getVideoTracks()[0]?.label || undefined)
+      // Device labels are only populated once permission has been granted.
+      const cams = (await navigator.mediaDevices.enumerateDevices())
+        .filter(d => d.kind === 'videoinput')
+        .map(d => d.deviceId)
+        .filter(Boolean)
+      setDeviceIds(cams)
+      setCameraStarting(false)
+    } catch (e) {
+      setCameraStarting(false)
+      const name = (e as DOMException)?.name
+      setCameraError(
+        name === 'NotAllowedError' ? 'Camera permission was denied. Allow it in your browser’s site settings, or use “Choose photo”.'
+        : name === 'NotFoundError' ? 'No camera was found on this device. Use “Choose photo” instead.'
+        : name === 'NotReadableError' ? 'The camera is already in use by another app.'
+        : 'Could not start the camera. Use “Choose photo” instead.'
+      )
+    }
+  }
+
+  function closeCamera() {
+    stopStream()
+    setCameraOpen(false)
+    setCameraError(null)
+    setCameraStarting(false)
+  }
+
+  async function switchCamera() {
+    if (deviceIds.length < 2) return
+    const next = (deviceIndex + 1) % deviceIds.length
+    setDeviceIndex(next)
+    await openCamera(deviceIds[next])
+  }
+
+  /** Snapshot the live video into a JPEG File and run it through the normal
+   *  pipeline. A canvas capture carries no EXIF, so the shutter time and the
+   *  camera label are stamped on explicitly. */
+  async function capturePhoto() {
+    const video = videoRef.current
+    if (!video || !video.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.92))
+    if (!blob) return
+    const shotAt = new Date()
+    const captured = new File([blob], `camera-${shotAt.toISOString().replace(/[:.]/g, '-')}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: shotAt.getTime(),
+    })
+    closeCamera()
+    await onPick(captured)
+    setMeta(prev => ({
+      ...(prev ?? {}),
+      capturedAt: shotAt.toISOString(),
+      cameraModel: prev?.cameraModel ?? cameraLabel,
+      width: prev?.width ?? canvas.width,
+      height: prev?.height ?? canvas.height,
+    }))
   }
 
   function clearPhoto() {
@@ -205,15 +320,6 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                     className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
                   />
 
-                  {/* Hidden inputs — `capture` asks phones for the rear camera. */}
-                  <input
-                    ref={cameraRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    hidden
-                    onChange={e => { onPick(e.target.files?.[0]); e.target.value = '' }}
-                  />
                   <input
                     ref={libraryRef}
                     type="file"
@@ -221,6 +327,62 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
                     hidden
                     onChange={e => { onPick(e.target.files?.[0]); e.target.value = '' }}
                   />
+
+                  {/* Live camera — works on laptops and phones alike */}
+                  {cameraOpen && (
+                    <div className="mt-2 rounded-xl border overflow-hidden bg-black">
+                      <div className="relative">
+                        <video
+                          ref={videoRef}
+                          playsInline
+                          muted
+                          autoPlay
+                          className="w-full max-h-64 object-cover bg-black"
+                        />
+                        {cameraStarting && (
+                          <p className="absolute inset-0 flex items-center justify-center gap-2 text-xs text-white">
+                            <Spinner size={14} className="animate-spin" /> Starting camera…
+                          </p>
+                        )}
+                        <button
+                          onClick={closeCamera}
+                          aria-label="Close camera"
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                        >
+                          <X size={14} weight="bold" />
+                        </button>
+                      </div>
+
+                      {cameraError ? (
+                        <p className="p-3 text-xs text-destructive bg-card">{cameraError}</p>
+                      ) : (
+                        <div className="flex items-center justify-center gap-3 p-3 bg-card">
+                          {deviceIds.length > 1 && (
+                            <button
+                              onClick={switchCamera}
+                              aria-label="Switch camera"
+                              className="p-2 rounded-full border text-foreground/70 hover:bg-muted transition-colors"
+                            >
+                              <ArrowsClockwise size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={capturePhoto}
+                            disabled={cameraStarting}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+                          >
+                            <Circle size={14} weight="fill" />
+                            Capture
+                          </button>
+                        </div>
+                      )}
+                      {cameraLabel && !cameraError && (
+                        <p className="px-3 pb-3 -mt-1 text-[11px] text-muted-foreground text-center bg-card truncate">
+                          {cameraLabel}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {previewUrl && (
                     <div className="mt-2 rounded-xl border overflow-hidden">
@@ -288,7 +450,7 @@ export function MissionUpdateDialog({ open, onClose }: Props) {
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
-                      onClick={() => cameraRef.current?.click()}
+                      onClick={() => openCamera()}
                       className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-full border hover:bg-muted transition-colors"
                     >
                       <Camera size={17} />
