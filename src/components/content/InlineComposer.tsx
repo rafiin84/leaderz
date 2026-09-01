@@ -146,7 +146,7 @@ export function InlineComposer() {
   const iconBtn = 'p-2 rounded-full text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-colors'
 
   return (
-    <section className="mx-4 mt-2 rounded-2xl bg-muted px-4 py-3" aria-label="Create a post">
+    <section className="mx-4 mt-2 rounded-2xl bg-muted/50 px-4 py-3" aria-label="Create a post">
       <div className="flex gap-3">
         <Avatar src={leader?.avatarUrl} name={leader?.name ?? 'You'} size="md" />
 
