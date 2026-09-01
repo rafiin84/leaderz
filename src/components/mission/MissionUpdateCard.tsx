@@ -1,8 +1,11 @@
 'use client'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash } from '@phosphor-icons/react'
+import { Trash, MapPin, MapTrifold } from '@phosphor-icons/react'
 import { Avatar } from '@/components/common/Avatar'
 import { PhotoMetadataList } from './MissionUpdateDialog'
+import { PhotoLocationDialog } from './PhotoLocationDialog'
+import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '@/lib/formatting'
 import { formatFileSize } from '@/lib/photoMetadata'
 import type { MissionUpdate } from '@/types/mission'
@@ -14,6 +17,8 @@ interface Props {
 
 export function MissionUpdateCard({ update, onRemove }: Props) {
   const { metadata: meta } = update
+  const [locationOpen, setLocationOpen] = useState(false)
+  const hasCoords = meta?.latitude !== undefined && meta?.longitude !== undefined
 
   return (
     <motion.article
@@ -53,11 +58,29 @@ export function MissionUpdateCard({ update, onRemove }: Props) {
       )}
 
       {update.photo && (
-        <img
-          src={update.photo.url}
-          alt={update.photo.caption ?? 'Mission update photo'}
-          className="w-full max-h-96 object-cover"
-        />
+        <div className="relative">
+          <img
+            src={update.photo.url}
+            alt={update.photo.caption ?? 'Mission update photo'}
+            className="w-full max-h-96 object-cover"
+          />
+          {/* Map/location affordance — always offered so the "no GPS" case can
+              explain itself rather than the control simply being absent. */}
+          <button
+            onClick={() => setLocationOpen(true)}
+            title={hasCoords ? 'View location on map' : 'Location unavailable'}
+            aria-label={hasCoords ? 'View photo location on map' : 'Photo location unavailable'}
+            className={cn(
+              'absolute bottom-2 right-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold backdrop-blur-sm transition-colors',
+              hasCoords
+                ? 'bg-black/65 text-white hover:bg-black/80'
+                : 'bg-black/45 text-white/70 hover:bg-black/60'
+            )}
+          >
+            {hasCoords ? <MapTrifold size={15} weight="fill" /> : <MapPin size={15} />}
+            <span className="hidden sm:inline">{hasCoords ? 'View location' : 'No location'}</span>
+          </button>
+        </div>
       )}
 
       {/* Location, time and camera details captured from the photo */}
@@ -76,6 +99,12 @@ export function MissionUpdateCard({ update, onRemove }: Props) {
           )}
         </div>
       )}
+      <PhotoLocationDialog
+        open={locationOpen}
+        onClose={() => setLocationOpen(false)}
+        meta={meta}
+        photoName={update.photo?.caption}
+      />
     </motion.article>
   )
 }
