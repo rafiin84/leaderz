@@ -52,11 +52,11 @@ export function PhotoMap({ latitude, longitude, label, className }: Props) {
         const icon = L.divIcon({
           className: '',
           html: `<span style="
-            display:block;width:18px;height:18px;border-radius:9999px;
-            background:#1a6b3c;border:3px solid #fff;
-            box-shadow:0 1px 6px rgba(0,0,0,.45);"></span>`,
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
+            display:block;width:22px;height:22px;border-radius:9999px;
+            background:#dc2626;border:3px solid #fff;
+            box-shadow:0 0 0 4px rgba(220,38,38,0.25), 0 2px 8px rgba(0,0,0,.45);"></span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
         })
         const marker = L.marker([latitude, longitude], { icon, title: label }).addTo(map)
         if (label) marker.bindPopup(label)

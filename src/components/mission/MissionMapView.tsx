@@ -8,6 +8,10 @@ import { formatRelativeTime } from '@/lib/formatting'
 import type { MissionUpdate } from '@/types/mission'
 import 'leaflet/dist/leaflet.css'
 
+/** Markers are red so they stand out against OSM's green/beige tiles. */
+const MARKER_RED = '#dc2626'
+const MARKER_RED_HALO = 'rgba(220,38,38,0.25)'
+
 interface Props {
   open: boolean
   onClose: () => void
@@ -123,15 +127,15 @@ export function MissionMapView({ open, onClose, updates }: Props) {
 
         for (const c of clusters) {
           const n = c.items.length
-          const size = n > 9 ? 44 : n > 1 ? 38 : 30
+          const size = n > 9 ? 50 : n > 1 ? 44 : 36
           const icon = L.divIcon({
             className: '',
             html: `<span style="
               display:flex;align-items:center;justify-content:center;
               width:${size}px;height:${size}px;border-radius:9999px;
-              background:#1a6b3c;color:#fff;border:3px solid #fff;
-              box-shadow:0 1px 8px rgba(0,0,0,.4);
-              font:700 ${n > 9 ? 13 : 12}px system-ui,sans-serif;">${n}</span>`,
+              background:${MARKER_RED};color:#fff;border:3px solid #fff;
+              box-shadow:0 0 0 4px ${MARKER_RED_HALO}, 0 2px 10px rgba(0,0,0,.45);
+              font:800 ${n > 9 ? 15 : 14}px system-ui,sans-serif;">${n}</span>`,
             iconSize: [size, size],
             iconAnchor: [size / 2, size / 2],
           })
@@ -150,12 +154,13 @@ export function MissionMapView({ open, onClose, updates }: Props) {
             className: '',
             html: `<span style="
               display:flex;align-items:center;justify-content:center;
-              width:26px;height:26px;border-radius:9999px;
-              background:rgba(255,255,255,.9);color:#1a6b3c;
-              border:2px dashed #1a6b3c;opacity:.75;
-              font:600 11px system-ui,sans-serif;">${m.count}</span>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13],
+              width:32px;height:32px;border-radius:9999px;
+              background:#fff;color:${MARKER_RED};
+              border:2.5px dashed ${MARKER_RED};
+              box-shadow:0 1px 6px rgba(0,0,0,.28);
+              font:700 12px system-ui,sans-serif;">${m.count}</span>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
           })
           L.marker([m.latitude, m.longitude], {
             icon,
@@ -274,12 +279,12 @@ export function MissionMapView({ open, onClose, updates }: Props) {
               {status === 'ready' && (
                 <div className="absolute bottom-2 left-2 z-[400] rounded-lg border bg-card/95 backdrop-blur-sm px-2.5 py-2 text-[11px] space-y-1 pointer-events-none">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-primary border-2 border-white shadow-sm" />
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm" style={{ background: MARKER_RED }} />
                     <span className="text-foreground">Mission posts</span>
                   </span>
                   {samples.length > 0 && (
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-primary bg-white/90" />
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed bg-white" style={{ borderColor: MARKER_RED }} />
                       <span className="text-muted-foreground">Sample state</span>
                     </span>
                   )}
