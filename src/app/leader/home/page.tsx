@@ -1,8 +1,7 @@
 'use client'
-import { Bell, MagnifyingGlass } from '@phosphor-icons/react'
+import { MagnifyingGlass } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
-import { usePosts, useNotifications } from '@/queries'
-import { useUIStore } from '@/stores/uiStore'
+import { usePosts } from '@/queries'
 import { InlineComposer } from '@/components/content/InlineComposer'
 import { PostCard } from '@/components/content/PostCard'
 import { CardSkeleton } from '@/components/common/Skeleton'
@@ -11,9 +10,6 @@ import Link from 'next/link'
 export default function HomePage() {
   const { activeTenantId } = useAppStore()
   const { data: posts, isLoading: postsLoading } = usePosts(activeTenantId)
-  const { data: notifications } = useNotifications(activeTenantId)
-  const { setNotificationsPanelOpen } = useUIStore()
-  const unread = notifications?.filter(n => !n.read).length ?? 0
 
   return (
     <div>
@@ -25,20 +21,6 @@ export default function HomePage() {
             <Link href="/leader/contacts" className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Search">
               <MagnifyingGlass size={20} />
             </Link>
-            {/* Single notifications entry point for the app — the sidebar no
-                longer duplicates it. Opens the drawer and carries the count. */}
-            <button
-              onClick={() => setNotificationsPanelOpen(true)}
-              className="relative p-2 rounded-full hover:bg-muted transition-colors"
-              aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-            >
-              <Bell size={20} />
-              {unread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-foreground text-background text-[10px] font-bold rounded-full min-w-[17px] h-[17px] flex items-center justify-center px-1">
-                  {unread > 9 ? '9+' : unread}
-                </span>
-              )}
-            </button>
           </div>
         </div>
       </header>

@@ -1,5 +1,5 @@
 import {
-  House, FilmStrip, AddressBook, User, Target, CalendarBlank,
+  House, FilmStrip, AddressBook, Target, CalendarBlank,
   Briefcase, Star, Users,
 } from '@phosphor-icons/react'
 
@@ -20,13 +20,12 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/leader/events', icon: CalendarBlank, label: 'Events' },
   { href: '/leader/projects', icon: Briefcase, label: 'Companies' },
   { href: '/leader/opportunities', icon: Star, label: 'Opportunities' },
-  { href: '/leader/profile', icon: User, label: 'Profile' },
 ]
 
 /** The four that get their own slot in the mobile bottom bar. */
 export const MOBILE_PRIMARY_HREFS = [
   '/leader/home',
+  '/leader/mission',
   '/leader/reels',
   '/leader/contacts',
-  '/leader/profile',
 ]

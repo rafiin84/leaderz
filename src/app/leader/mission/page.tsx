@@ -155,11 +155,13 @@ export default function MissionPage() {
 
             {/* The map is the heart of the page, so it sits inline under the
                 banner rather than behind a button. Expand opens the full view. */}
-            <section aria-label="Mission map">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            {/* Full-bleed: -mx-4 cancels the container's px-4 so the map runs
+                the full width of the column with no gap on either side. */}
+            <section aria-label="Mission map" className="-mx-4">
+              <h2 className="px-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Mission across India
               </h2>
-              <div className="relative rounded-2xl border overflow-hidden">
+              <div className="relative border-y overflow-hidden">
                 <MissionMap
                   updates={updates ?? []}
                   className="relative h-[320px] sm:h-[440px] bg-muted"
@@ -211,10 +213,11 @@ export default function MissionPage() {
               </div>
             </section>
 
-            {/* Initiatives */}
+            {/* Labelled "Events" per request; the cards are Initiative
+                records, which is a distinct type from Event. */}
             {initiatives && initiatives.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Initiatives</h2>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Events</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {initiatives.map((init, i) => <InitiativeCard key={init.id} initiative={init} index={i} />)}
                 </div>

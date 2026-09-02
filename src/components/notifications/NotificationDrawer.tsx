@@ -39,11 +39,11 @@ export function NotificationDrawer() {
             onClick={() => setNotificationsPanelOpen(false)}
           />
           <motion.aside
-            initial={{ x: -380 }}
+            initial={{ x: 380 }}
             animate={{ x: 0 }}
-            exit={{ x: -380 }}
+            exit={{ x: 380 }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed top-0 left-0 h-full w-[360px] bg-background border-r border-border z-50 flex flex-col shadow-xl"
+            className="fixed top-0 right-0 h-full w-[360px] max-w-full bg-background border-l border-border z-50 flex flex-col shadow-xl"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
               <h2 className="text-lg font-bold text-foreground">Notifications</h2>
