@@ -1,7 +1,7 @@
 import { LeaderBottomNav } from '@/components/navigation/LeaderBottomNav'
 import { DesktopSidebar } from '@/components/navigation/DesktopSidebar'
 import { PostComposer } from '@/components/content/PostComposer'
-import { RightPanel } from '@/components/layout/RightPanel'
+import { RightPanelSwitch } from '@/components/layout/RightPanelSwitch'
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
 
 export default function LeaderLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export default function LeaderLayout({ children }: { children: React.ReactNode }
             {children}
           </div>
         </main>
-        <RightPanel />
+        <RightPanelSwitch />
       </div>
       <div className="md:hidden">
         <LeaderBottomNav />
