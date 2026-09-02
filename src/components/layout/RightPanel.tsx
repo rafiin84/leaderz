@@ -58,8 +58,8 @@ export function RightPanel() {
               <div className="flex items-start gap-2">
                 <Sparkle size={13} weight="fill" className="text-foreground/40 mt-0.5 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground leading-tight">{s.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{s.body}</p>
+                  {/* No title here: it would repeat the section heading above. */}
+                  <p className="text-xs text-muted-foreground leading-relaxed">{s.body}</p>
                 </div>
               </div>
             </div>
@@ -71,12 +71,12 @@ export function RightPanel() {
       {(upcomingBirthdays.length > 0 || pendingFollowUps.length > 0) && (
         <section className="mb-6">
           <SectionHeading>Needs attention</SectionHeading>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {upcomingBirthdays.map(c => (
               <Link
                 key={`bday-${c.id}`}
                 href={`/leader/contacts/${c.id}`}
-                className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 transition-colors"
               >
                 <Cake size={15} weight="fill" className="text-rose-400 shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export function RightPanel() {
               <Link
                 key={`fu-${c.id}`}
                 href={`/leader/contacts/${c.id}`}
-                className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 transition-colors"
               >
                 <Lightning size={15} weight="fill" className="text-amber-400 shrink-0" />
                 <div className="flex-1 min-w-0">
