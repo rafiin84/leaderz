@@ -1,4 +1,5 @@
 @AGENTS.md
+@WORKING-PREFERENCES.md
 
 # LeaderZ — Project Context for Claude
 
