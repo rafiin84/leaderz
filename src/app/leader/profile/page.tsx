@@ -94,7 +94,7 @@ export default function ProfilePage() {
           {[
             { href: '/leader/mission', icon: Target, label: 'Mission', description: mission?.title },
             { href: '/leader/events', icon: FilmStrip, label: 'Events & Initiatives', description: 'Manage your events' },
-            { href: '/leader/projects', icon: FileText, label: 'Projects & Talent', description: 'Discovered projects' },
+            { href: '/leader/projects', icon: FileText, label: 'Companies', description: 'Discovered companies' },
             { href: '/leader/followers', icon: Users, label: 'Followers', description: `${formatNumber(activeTenant?.followerCount ?? 0)} following you` },
             { href: '/leader/team', icon: UsersThree, label: 'Team', description: `${team?.length ?? 0} members` },
             { href: '/leader/opportunities', icon: Target, label: 'Opportunities', description: 'Jobs, funding, mentorship' },

@@ -153,23 +153,24 @@ export default function MissionPage() {
             {/* The map is the heart of the page, so it sits inline under the
                 banner rather than behind a button. Expand opens the full view. */}
             <section aria-label="Mission map">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Mission across India
-                </h2>
-                <button
-                  onClick={() => setMapExpanded(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full border hover:bg-muted transition-colors"
-                >
-                  <ArrowsOut size={13} />
-                  Expand
-                </button>
-              </div>
-              <div className="rounded-2xl border overflow-hidden">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Mission across India
+              </h2>
+              <div className="relative rounded-2xl border overflow-hidden">
                 <MissionMap
                   updates={updates ?? []}
-                  className="relative h-[320px] sm:h-[400px] bg-muted"
+                  className="relative h-[320px] sm:h-[440px] bg-muted"
                 />
+                {/* Full-screen view is a corner affordance on the map itself,
+                    so the section reads as a map rather than as a button. */}
+                <button
+                  onClick={() => setMapExpanded(true)}
+                  aria-label="Expand map to full screen"
+                  title="Expand map"
+                  className="absolute top-2.5 right-2.5 z-[400] p-2 rounded-lg bg-card/95 backdrop-blur-sm border shadow-sm text-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+                >
+                  <ArrowsOut size={15} weight="bold" />
+                </button>
               </div>
             </section>
 
