@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, MapTrifold, CaretRight } from '@phosphor-icons/react'
+import { X, MapTrifold, CaretRight, ArrowLeft } from '@phosphor-icons/react'
 import { MissionMap, useMissionMapData, MARKER_RED, type Pin } from './MissionMap'
 import type { LocationCluster } from '@/lib/clusterLocations'
 import { formatRelativeTime } from '@/lib/formatting'
@@ -49,26 +49,24 @@ export function MissionMapView({ open, onClose, updates }: Props) {
       {open && (
         <>
           <motion.div
-            key="map-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={close}
-            className="fixed inset-0 bg-black/50 z-40"
-          />
-          <motion.div
             key="map-panel"
             role="dialog"
             aria-modal="true"
             aria-label="Mission map"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 top-8 z-50 md:inset-0 md:m-auto md:h-[86vh] md:w-[min(900px,92vw)] bg-card rounded-t-3xl md:rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="fixed inset-0 z-50 bg-card flex flex-col overflow-hidden"
           >
             <div className="flex items-start gap-3 px-4 py-3 border-b shrink-0">
+              <button
+                onClick={close}
+                aria-label="Back to mission"
+                className="shrink-0 p-1.5 -ml-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <ArrowLeft size={18} />
+              </button>
               <MapTrifold size={18} weight="fill" className="mt-0.5 shrink-0" style={{ color: MARKER_RED }} />
               <div className="flex-1 min-w-0">
                 <h2 className="text-sm font-semibold text-foreground">Mission map</h2>
@@ -89,7 +87,7 @@ export function MissionMapView({ open, onClose, updates }: Props) {
               </button>
               <button
                 onClick={close}
-                aria-label="Close"
+                aria-label="Back to mission"
                 className="shrink-0 p-2 -mr-2 -mt-1 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
               >
                 <X size={20} />
