@@ -46,20 +46,20 @@ export function ContactCard({ contact, compact = false }: Props) {
           <div className="flex items-center shrink-0">
             <a
               href={`tel:${phone.replace(/\s/g, '')}`}
-              className="p-2 rounded-full hover:bg-muted transition-colors text-foreground/40 hover:text-foreground"
+              className="p-2 rounded-full bg-foreground/[0.06] text-foreground hover:bg-foreground/12 transition-colors"
               aria-label={`Call ${contact.name}`}
             >
-              <Phone size={15} />
+              <Phone size={15} weight="fill" />
             </a>
             {waPhone && (
               <a
                 href={`https://wa.me/${waPhone}?text=${encodeURIComponent(buildWhatsAppMessage(contact))}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full hover:bg-muted transition-colors text-foreground/40 hover:text-green-600"
+                className="p-2 rounded-full bg-[#25D366]/15 text-[#128C4A] dark:text-[#25D366] hover:bg-[#25D366]/25 transition-colors"
                 aria-label={`WhatsApp ${contact.name}`}
               >
-                <WhatsappLogo size={15} />
+                <WhatsappLogo size={15} weight="fill" />
               </a>
             )}
           </div>

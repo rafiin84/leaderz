@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, MagnifyingGlass, Phone, MapPin } from '@phosphor-icons/react'
+import { Users, MagnifyingGlass, Phone, MapPin, WhatsappLogo } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useFollowers } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
@@ -262,13 +262,24 @@ export default function FollowersPage() {
                     ) : null}
                   </Link>
                   {phone && (
-                    <a
-                      href={`tel:${phone}`}
-                      className="p-2 rounded-full hover:bg-muted transition-colors text-foreground/50 hover:text-foreground shrink-0"
-                      aria-label={`Call ${follower.name}`}
-                    >
-                      <Phone size={16} />
-                    </a>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <a
+                        href={`tel:${phone}`}
+                        className="p-2 rounded-full bg-foreground/[0.06] text-foreground hover:bg-foreground/12 transition-colors"
+                        aria-label={`Call ${follower.name}`}
+                      >
+                        <Phone size={16} weight="fill" />
+                      </a>
+                      <a
+                        href={`https://wa.me/${phone.replace(/[\s+()-]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-full bg-[#25D366]/15 text-[#128C4A] dark:text-[#25D366] hover:bg-[#25D366]/25 transition-colors"
+                        aria-label={`WhatsApp ${follower.name}`}
+                      >
+                        <WhatsappLogo size={16} weight="fill" />
+                      </a>
+                    </div>
                   )}
                 </motion.div>
               )

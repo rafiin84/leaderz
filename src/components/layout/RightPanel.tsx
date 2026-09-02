@@ -228,10 +228,10 @@ export function RightPanel() {
                 {MOCK_PHONES[f.id] && (
                   <a
                     href={`tel:${MOCK_PHONES[f.id]}`}
-                    className="shrink-0 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-foreground/5 transition-all"
+                    className="shrink-0 p-1.5 rounded-full bg-foreground/[0.06] text-foreground hover:bg-foreground/12 transition-colors"
                     title="Call"
                   >
-                    <Phone size={13} weight="fill" className="text-foreground/60" />
+                    <Phone size={13} weight="fill" />
                   </a>
                 )}
               </div>
