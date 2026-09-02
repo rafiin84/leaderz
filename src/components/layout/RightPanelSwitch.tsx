@@ -4,6 +4,10 @@ import { RightPanel } from './RightPanel'
 import { FollowersRightPanel } from './FollowersRightPanel'
 import { ReelsRightPanel } from './ReelsRightPanel'
 import { MissionRightPanel } from './MissionRightPanel'
+import { EventsRightPanel } from './EventsRightPanel'
+import { CompaniesRightPanel } from './CompaniesRightPanel'
+import { OpportunitiesRightPanel } from './OpportunitiesRightPanel'
+import { ProfileRightPanel } from './ProfileRightPanel'
 
 /**
  * Chooses the right-hand panel for the current route.
@@ -18,6 +22,10 @@ export function RightPanelSwitch() {
   if (pathname.startsWith('/leader/followers')) return <FollowersRightPanel />
   if (pathname.startsWith('/leader/reels')) return <ReelsRightPanel />
   if (pathname.startsWith('/leader/mission')) return <MissionRightPanel />
+  if (pathname.startsWith('/leader/events')) return <EventsRightPanel />
+  if (pathname.startsWith('/leader/projects')) return <CompaniesRightPanel />
+  if (pathname.startsWith('/leader/opportunities')) return <OpportunitiesRightPanel />
+  if (pathname.startsWith('/leader/profile')) return <ProfileRightPanel />
 
   return <RightPanel />
 }
