@@ -1,7 +1,7 @@
 import { LeaderBottomNav } from '@/components/navigation/LeaderBottomNav'
 import { DesktopSidebar } from '@/components/navigation/DesktopSidebar'
 import { PostComposer } from '@/components/content/PostComposer'
-import { RightPanelSwitch } from '@/components/layout/RightPanelSwitch'
+import { LeaderShell } from '@/components/layout/LeaderShell'
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
 
 export default function LeaderLayout({ children }: { children: React.ReactNode }) {
@@ -12,12 +12,7 @@ export default function LeaderLayout({ children }: { children: React.ReactNode }
           The content column is a fixed width, so collapsing never resizes it. */}
       <div className="flex w-fit max-w-full mx-auto">
         <DesktopSidebar />
-        <main className="w-[672px] max-w-full min-w-0">
-          <div className="has-bottom-nav md:pb-0">
-            {children}
-          </div>
-        </main>
-        <RightPanelSwitch />
+        <LeaderShell>{children}</LeaderShell>
       </div>
       <div className="md:hidden">
         <LeaderBottomNav />

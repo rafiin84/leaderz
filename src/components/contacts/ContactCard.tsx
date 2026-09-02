@@ -6,18 +6,11 @@ import { Avatar } from '@/components/common/Avatar'
 import { PrivacyBadge } from '@/components/common/PrivacyBadge'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatRelativeTime } from '@/lib/formatting'
+import { buildWhatsAppMessage } from '@/lib/contactActions'
 
 interface Props {
   contact: Contact
   compact?: boolean
-}
-
-function buildWhatsAppMessage(contact: Contact): string {
-  const first = contact.name.split(' ')[0]
-  const hasBirthday = contact.importantDates.some(d => d.type === 'birthday')
-  if (hasBirthday) return `Happy Birthday ${first}! Wishing you a wonderful year ahead.`
-  if (contact.nextFollowUpDate) return `Hi ${first}, following up on our last conversation. Would love to connect soon!`
-  return `Hi ${first}, thank you for your time and support. Hope you're doing well!`
 }
 
 export function ContactCard({ contact, compact = false }: Props) {
