@@ -19,6 +19,7 @@ import { MissionMapView } from '@/components/mission/MissionMapView'
 import { MissionMap } from '@/components/mission/MissionMap'
 import { JoinMissionCta } from '@/components/mission/JoinMissionCta'
 import { PostCard } from '@/components/content/PostCard'
+import { ImageWithFallback } from '@/components/common/ImageWithFallback'
 import { Skeleton } from '@/components/common/Skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { formatNumber, formatCurrency, formatDate, formatDuration } from '@/lib/formatting'
@@ -137,7 +138,7 @@ export default function MissionPage() {
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl overflow-hidden border bg-card">
               {mission.coverImageUrl && (
                 <div className="relative h-48 overflow-hidden">
-                  <img src={mission.coverImageUrl} alt={mission.title} className="w-full h-full object-cover" />
+                  <ImageWithFallback src={mission.coverImageUrl} fallbackSrc="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&h=600&fit=crop" alt={mission.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <h2 className="text-2xl font-bold text-white">{mission.title}</h2>

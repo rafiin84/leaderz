@@ -7,6 +7,7 @@ import {
 import Link from 'next/link'
 import { Phone, Lightning, CalendarBlank, Cake, Target, Sparkle } from '@phosphor-icons/react'
 import { formatNumber, formatShortDate } from '@/lib/formatting'
+import { ImageWithFallback } from '@/components/common/ImageWithFallback'
 
 const MOCK_PHONES: Record<string, string> = {
   'f-01': '+917010012345',
@@ -111,7 +112,7 @@ export function RightPanel() {
           <Link href="/leader/mission" className="block rounded-xl border border-border bg-card overflow-hidden hover:bg-muted/30 transition-colors">
             <div className="relative h-16 overflow-hidden">
               {mission.coverImageUrl && (
-                <img src={mission.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                <ImageWithFallback src={mission.coverImageUrl} fallbackSrc="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&h=600&fit=crop" alt="" className="w-full h-full object-cover" />
               )}
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/10" />
               <div className="absolute inset-0 px-3 flex items-center gap-2">

@@ -5,6 +5,7 @@ import { useAppStore } from '@/stores/appStore'
 import { useMission } from '@/queries'
 import { formatNumber } from '@/lib/formatting'
 import Link from 'next/link'
+import { ImageWithFallback } from '@/components/common/ImageWithFallback'
 
 export function MissionPulse() {
   const activeTenantId = useAppStore(s => s.activeTenantId)
@@ -29,7 +30,7 @@ export function MissionPulse() {
       <Link href="/leader/mission" className="block rounded-2xl border bg-card overflow-hidden hover:shadow-md transition-all card-hover">
         <div className="relative h-24 overflow-hidden">
           {mission.coverImageUrl && (
-            <img src={mission.coverImageUrl} alt={mission.title} className="w-full h-full object-cover" />
+            <ImageWithFallback src={mission.coverImageUrl} fallbackSrc="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&h=600&fit=crop" alt={mission.title} className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
           <div className="absolute inset-0 p-4 flex items-center gap-3">

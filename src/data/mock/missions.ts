@@ -7,7 +7,8 @@ export const MOCK_MISSIONS: Record<string, Mission> = {
     title: 'Rural Development',
     statement: 'Create a thriving ecosystem of knowledge, innovation, and enterprise in rural India — starting with Tamil Nadu.',
     vision: 'I believe that India\'s next wave of talent, innovation, and economic strength will come from its villages and small towns. Our mission is to create the conditions — education, engineering, entrepreneurship, jobs, and infrastructure — that let that talent flourish where it is born.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&h=600&fit=crop',
+    // Local file; ImageWithFallback falls back to the landscape if absent.
+    coverImageUrl: '/sridhar-cycle.jpg',
     topics: [
       { id: 'topic-1', tenantId: 'tenant-sridhar', missionId: 'mission-sridhar', name: 'Rural Students', description: 'Scholarships, coaching, mentorship and placement for students from rural Tamil Nadu', color: '#059669', postCount: 34, eventCount: 8, followerCount: 12400, createdAt: '2024-01-10T00:00:00Z', updatedAt: '2026-08-30T00:00:00Z' },
       { id: 'topic-2', tenantId: 'tenant-sridhar', missionId: 'mission-sridhar', name: 'Rural Engineering', description: 'Nurturing engineering talent in rural districts — aerospace, manufacturing, software, electronics', color: '#d97706', postCount: 28, eventCount: 6, followerCount: 8730, createdAt: '2024-01-10T00:00:00Z', updatedAt: '2026-08-30T00:00:00Z' },
