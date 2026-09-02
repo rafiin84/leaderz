@@ -120,6 +120,14 @@ body {
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
+/* Hide a scrollbar while keeping the element scrollable. Referenced across the
+   app (right panels, tab strips) but Tailwind v4 ships no such utility. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
 /* Reels — hide scrollbar */
 .reels-scroll {
   scrollbar-width: none;

@@ -107,14 +107,16 @@ export default function MissionPage() {
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 px-4 pb-3">
+        {/* One line, scrolled horizontally — the tab set is long enough to
+            wrap onto two rows otherwise. */}
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               aria-current={tab === t.id ? 'page' : undefined}
               className={cn(
-                'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border transition-colors',
+                'shrink-0 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border transition-colors whitespace-nowrap',
                 tab === t.id
                   ? 'bg-foreground text-background border-foreground'
                   : 'bg-transparent text-foreground/60 border-border hover:bg-muted hover:text-foreground'
