@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spinner, WarningCircle } from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
 import { groupByState, INDIA_BOUNDS, type LocationCluster } from '@/lib/clusterLocations'
 import { SAMPLE_STATE_MARKERS } from '@/data/mock/missionMapSamples'
 import type { MissionUpdate } from '@/types/mission'
@@ -208,7 +209,9 @@ export function MissionMap({
   }, [resizeKey, focus])
 
   return (
-    <div className={className}>
+    // `isolate` keeps Leaflet's internal z-indexes (panes 400, controls 800)
+    // inside their own stacking context, so they cannot paint over dialogs.
+    <div className={cn('isolate', className)}>
       <div ref={containerRef} className="w-full h-full" />
       {status === 'loading' && (
         <p className="absolute inset-0 flex items-center justify-center gap-2 text-xs text-muted-foreground pointer-events-none">

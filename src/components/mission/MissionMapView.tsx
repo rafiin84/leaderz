@@ -96,14 +96,29 @@ export function MissionMapView({ open, onClose, updates }: Props) {
               </button>
             </div>
 
-            <MissionMap
-              updates={updates}
-              showSamples={showSamples}
-              onSelectCluster={setSelected}
-              resizeKey={selected ? 'open' : 'closed'}
-              focus={selected}
-              className="relative flex-1 min-h-0 bg-muted"
-            />
+            <div className="relative flex-1 min-h-0">
+              <MissionMap
+                updates={updates}
+                showSamples={showSamples}
+                onSelectCluster={setSelected}
+                resizeKey={selected ? 'open' : 'closed'}
+                focus={selected}
+                className="relative w-full h-full bg-muted"
+              />
+              {/* Legend sits above the isolated map, so a low z-index suffices. */}
+              <div className="absolute bottom-2 left-2 z-10 rounded-lg border bg-card/95 backdrop-blur-sm px-2.5 py-2 text-[11px] space-y-1 pointer-events-none">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm" style={{ background: MARKER_RED }} />
+                  <span className="text-foreground">Mission posts</span>
+                </span>
+                {samples.length > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed bg-white" style={{ borderColor: MARKER_RED }} />
+                    <span className="text-muted-foreground">Sample state</span>
+                  </span>
+                )}
+              </div>
+            </div>
 
             <AnimatePresence>
               {selected && (

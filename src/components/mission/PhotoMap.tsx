@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Spinner, WarningCircle } from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
 import 'leaflet/dist/leaflet.css'
 
 interface Props {
@@ -77,7 +78,7 @@ export function PhotoMap({ latitude, longitude, label, className }: Props) {
   }, [latitude, longitude, label])
 
   return (
-    <div className={className}>
+    <div className={cn('isolate', className)}>
       <div ref={containerRef} className="w-full h-full" style={{ background: 'var(--muted)' }} />
       {status === 'loading' && (
         <p className="absolute inset-0 flex items-center justify-center gap-2 text-xs text-muted-foreground pointer-events-none">

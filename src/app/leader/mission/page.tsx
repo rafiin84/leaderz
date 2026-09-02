@@ -167,7 +167,7 @@ export default function MissionPage() {
                   onClick={() => setMapExpanded(true)}
                   aria-label="Expand map to full screen"
                   title="Expand map"
-                  className="absolute top-2.5 right-2.5 z-[400] p-2 rounded-lg bg-card/95 backdrop-blur-sm border shadow-sm text-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+                  className="absolute top-2.5 right-2.5 z-10 p-2 rounded-lg bg-card/95 backdrop-blur-sm border shadow-sm text-foreground/70 hover:text-foreground hover:bg-card transition-colors"
                 >
                   <ArrowsOut size={15} weight="bold" />
                 </button>
