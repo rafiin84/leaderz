@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Users, Lock, MapPin, PaperPlaneTilt, Star, DotsThree, CheckCircle } from '@phosphor-icons/react'
+import { ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Users, Lock, MapPin, PaperPlaneTilt, Star, DotsThree, CheckCircle, WhatsappLogo } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
@@ -13,6 +13,7 @@ import { CommunicationComposer } from '@/components/contacts/CommunicationCompos
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatDate, formatRelativeTime } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
+import { whatsAppHref } from '@/lib/contactActions'
 import type { ContactInteraction } from '@/types/contact'
 
 export default function ContactDetailClient() {
@@ -60,6 +61,8 @@ export default function ContactDetailClient() {
   }
 
   const isLeaderOnly = contact.privacyLevel === 'leader_only'
+  /** Undefined when the contact has no phone, which hides the action. */
+  const waHref = whatsAppHref(contact)
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -124,7 +127,19 @@ export default function ContactDetailClient() {
         )}
 
         {/* Quick actions */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className={cn('grid gap-2', waHref ? 'grid-cols-5' : 'grid-cols-4')}>
+          {waHref && (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`WhatsApp ${contact.name}`}
+              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-[#25D366]/12 hover:bg-[#25D366]/20 transition-colors"
+            >
+              <WhatsappLogo size={20} weight="fill" className="text-[#128C4A] dark:text-[#25D366]" />
+              <span className="text-[10px] font-medium text-muted-foreground">WhatsApp</span>
+            </a>
+          )}
           {[
             { icon: Phone, label: 'Call', color: 'text-emerald-600', type: 'call' as const, composer: false },
             { icon: PaperPlaneTilt, label: 'Message', color: 'text-blue-600', type: 'message' as const, composer: true },

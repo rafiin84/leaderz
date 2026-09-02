@@ -1,11 +1,12 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MagnifyingGlass, AddressBook, Plus, ShieldCheck, Lock, X } from '@phosphor-icons/react'
+import { MagnifyingGlass, AddressBook, Plus, ShieldCheck, Lock, X, SquaresFour, Rows } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useContacts } from '@/queries'
 import { ContactListItem } from '@/components/contacts/ContactListItem'
+import { ContactTable } from '@/components/contacts/ContactTable'
 import { ContactCardSkeleton } from '@/components/common/Skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { CONTACT_CATEGORY_LABELS, type ContactCategory } from '@/types/contact'
@@ -19,6 +20,7 @@ export default function ContactsPage() {
   const { contactSearchQuery, setContactSearch } = useUIStore()
   const { data: contacts, isLoading } = useContacts(activeTenantId, userRole)
   const [tab, setTab] = useState<Tab>('all')
+  const [view, setView] = useState<'cards' | 'table'>('cards')
 
   /** Only the leader gets a Personal tab. The data layer already withholds
    *  leader_only contacts from every other role, so this hides a tab that
@@ -58,7 +60,7 @@ export default function ContactsPage() {
 
   const pill = (active: boolean) =>
     cn(
-      'text-xs px-3 py-1.5 rounded-full font-medium border transition-colors',
+      'shrink-0 whitespace-nowrap text-xs px-3 py-1.5 rounded-full font-medium border transition-colors',
       active
         ? 'bg-foreground text-background border-foreground'
         : 'bg-transparent text-foreground/60 border-border hover:bg-muted hover:text-foreground'
@@ -74,6 +76,27 @@ export default function ContactsPage() {
             <p className="text-xs text-muted-foreground mt-0.5">
               Private to you — no one else in the system can see these.
             </p>
+          </div>
+          {/* Cards for scanning, table for packing more rows on screen. */}
+          <div className="shrink-0 flex items-center rounded-full border p-0.5" role="group" aria-label="View">
+            {([
+              { id: 'cards' as const, icon: SquaresFour, label: 'Card view' },
+              { id: 'table' as const, icon: Rows, label: 'Table view' },
+            ]).map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setView(id)}
+                aria-label={label}
+                aria-pressed={view === id}
+                title={label}
+                className={cn(
+                  'p-1.5 rounded-full transition-colors',
+                  view === id ? 'bg-foreground text-background' : 'text-foreground/50 hover:text-foreground'
+                )}
+              >
+                <Icon size={15} weight={view === id ? 'fill' : 'regular'} />
+              </button>
+            ))}
           </div>
           <button className="shrink-0 inline-flex items-center gap-1.5 bg-foreground text-background px-3.5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity">
             <Plus size={15} weight="bold" />
@@ -104,8 +127,9 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Tabs — wrap across the full width rather than scrolling sideways */}
-        <div className="flex flex-wrap gap-2 px-4 pb-3">
+        {/* One scrolling line — the category set is long enough to wrap onto
+            three rows otherwise. */}
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-none">
           <button onClick={() => setTab('all')} className={pill(tab === 'all')}>
             All
           </button>
@@ -168,19 +192,23 @@ export default function ContactsPage() {
               {filtered.length} contact{filtered.length !== 1 ? 's' : ''}
               {tab !== 'all' && tab !== 'personal' && ` in ${CONTACT_CATEGORY_LABELS[tab]}`}
             </p>
-            <div className="grid gap-3 xl:grid-cols-2">
-              {filtered.map((contact, i) => (
-                <motion.div
-                  key={contact.id}
-                  className="min-w-0"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(i * 0.025, 0.3) }}
-                >
-                  <ContactListItem contact={contact} />
-                </motion.div>
-              ))}
-            </div>
+            {view === 'table' ? (
+              <ContactTable contacts={filtered} />
+            ) : (
+              <div className="grid gap-3 xl:grid-cols-2">
+                {filtered.map((contact, i) => (
+                  <motion.div
+                    key={contact.id}
+                    className="min-w-0"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i * 0.025, 0.3) }}
+                  >
+                    <ContactListItem contact={contact} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

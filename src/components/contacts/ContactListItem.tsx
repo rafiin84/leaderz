@@ -26,7 +26,7 @@ export function ContactListItem({ contact }: Props) {
   const wa = whatsAppHref(contact)
 
   return (
-    <div className="group min-w-0 rounded-2xl border bg-card p-4 transition-colors hover:border-foreground/20">
+    <div className="group min-w-0 rounded-2xl border bg-muted/40 p-4 transition-colors hover:bg-muted/60 hover:border-foreground/20">
       <div className="flex items-start gap-3">
         <Link href={`/leader/contacts/${contact.id}`} className="shrink-0" aria-label={`Open ${contact.name}`}>
           <Avatar src={contact.avatarUrl} name={contact.name} size="lg" verified={contact.isPersonallyVerified} />
