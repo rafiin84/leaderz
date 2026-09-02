@@ -174,8 +174,10 @@ export default function MissionPage() {
               </div>
             </section>
 
-            {/* Topics */}
-            <section>
+            {/* Topics and Impact live in the right panel, but that panel is
+                xl-only — so they stay here below xl rather than vanishing on
+                phones and tablets. */}
+            <section className="xl:hidden">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Topics</h2>
               <div className="flex gap-2 flex-wrap">
                 {mission.topics.map(topic => (
@@ -194,7 +196,7 @@ export default function MissionPage() {
             </section>
 
             {/* Impact */}
-            <section>
+            <section className="xl:hidden">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Impact snapshot</h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {impactStats.map(stat => (
