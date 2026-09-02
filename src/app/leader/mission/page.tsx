@@ -1,17 +1,39 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Target, Users, MapPin, TrendUp, Briefcase, Star, CalendarBlank, Plus, MapTrifold } from '@phosphor-icons/react'
+import {
+  Target, Plus, ArrowsOut, MapPin, Users, CalendarBlank, Briefcase, Star,
+  TrendUp, FilmStrip, Article,
+} from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
-import { useMission, useInitiatives, useEvents, useProjects, useMissionUpdates, useRemoveMissionUpdate } from '@/queries'
+import {
+  useMission, useInitiatives, useEvents, useProjects, useOpportunities,
+  useMissionUpdates, useRemoveMissionUpdate, usePosts, useReels,
+} from '@/queries'
 import { InitiativeCard } from '@/components/mission/InitiativeCard'
+import { OpportunityCard } from '@/components/opportunities/OpportunityCard'
 import { MissionUpdateDialog } from '@/components/mission/MissionUpdateDialog'
 import { MissionUpdateCard } from '@/components/mission/MissionUpdateCard'
 import { MissionMapView } from '@/components/mission/MissionMapView'
-import { OpportunityCard } from '@/components/opportunities/OpportunityCard'
+import { MissionMap } from '@/components/mission/MissionMap'
+import { JoinMissionCta } from '@/components/mission/JoinMissionCta'
+import { PostCard } from '@/components/content/PostCard'
 import { Skeleton } from '@/components/common/Skeleton'
-import { formatNumber, formatCurrency } from '@/lib/formatting'
-import Link from 'next/link'
+import { EmptyState } from '@/components/common/EmptyState'
+import { formatNumber, formatCurrency, formatDate, formatDuration } from '@/lib/formatting'
+import { cn } from '@/lib/utils'
+
+const TABS = [
+  { id: 'details', label: 'Details' },
+  { id: 'events', label: 'Events' },
+  { id: 'posts', label: 'Posts' },
+  { id: 'reels', label: 'Reels' },
+  { id: 'organizations', label: 'Organizations' },
+  { id: 'opportunities', label: 'Opportunities' },
+] as const
+
+type TabId = (typeof TABS)[number]['id']
 
 export default function MissionPage() {
   const activeTenantId = useAppStore(s => s.activeTenantId)
@@ -19,223 +41,315 @@ export default function MissionPage() {
   const { data: initiatives } = useInitiatives(activeTenantId)
   const { data: events } = useEvents(activeTenantId)
   const { data: projects } = useProjects(activeTenantId)
+  const { data: opportunities } = useOpportunities(activeTenantId)
+  const { data: posts } = usePosts(activeTenantId)
+  const { data: reels } = useReels(activeTenantId)
   const { data: updates } = useMissionUpdates(activeTenantId)
   const removeUpdate = useRemoveMissionUpdate(activeTenantId)
-  const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
+
+  const [tab, setTab] = useState<TabId>('details')
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
-  const [mapViewOpen, setMapViewOpen] = useState(false)
+  const [mapExpanded, setMapExpanded] = useState(false)
+
+  /** Posts and reels carrying this mission's tag. */
+  const missionPosts = useMemo(
+    () => (posts ?? []).filter(p => p.missionId === mission?.id || p.missionTitle === mission?.title),
+    [posts, mission]
+  )
+  const missionReels = useMemo(
+    () => (reels ?? []).filter(r => r.missionId === mission?.id || r.missionTitle === mission?.title),
+    [reels, mission]
+  )
+
+  const counts: Record<TabId, number | undefined> = {
+    details: undefined,
+    events: events?.length,
+    posts: missionPosts.length,
+    reels: missionReels.length,
+    organizations: projects?.length,
+    opportunities: opportunities?.length,
+  }
 
   if (isLoading || !mission) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4">
         <Skeleton className="h-48 w-full rounded-2xl" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-56 w-full rounded-2xl" />
       </div>
     )
   }
-
-  const activeTopic = mission.topics.find(t => t.id === activeTopicId)
 
   const impactStats = [
     { label: 'People reached', value: formatNumber(mission.impact.peopleReached), icon: Users },
     { label: 'Districts', value: mission.impact.districtsActive, icon: MapPin },
     { label: 'Activities', value: mission.impact.activitiesCount, icon: TrendUp },
-    { label: 'Projects', value: mission.impact.projectsDiscovered, icon: Briefcase },
+    { label: 'Companies', value: mission.impact.projectsDiscovered, icon: Briefcase },
     { label: 'Jobs created', value: formatNumber(mission.impact.jobsCreated), icon: Star },
     { label: 'Funding', value: formatCurrency(mission.impact.fundingFacilitated), icon: TrendUp },
     { label: 'Students', value: formatNumber(mission.impact.studentsSupported), icon: Users },
-    { label: 'Orgs involved', value: mission.impact.organizationsInvolved, icon: Users },
+    { label: 'Organisations', value: mission.impact.organizationsInvolved, icon: Users },
   ]
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
+    <div>
+      {/* Header + tabs */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Target size={20} className="text-primary" weight="fill" />
-          <h1 className="text-xl font-bold text-foreground flex-1">Mission</h1>
-          <button
-            onClick={() => setMapViewOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold text-foreground hover:bg-muted transition-colors"
-          >
-            <MapTrifold size={14} weight="fill" />
-            Map view
-          </button>
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <Target size={20} className="text-primary shrink-0" weight="fill" />
+          <h1 className="text-xl font-bold text-foreground flex-1 truncate">Mission</h1>
           <button
             onClick={() => setUpdateDialogOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
           >
             <Plus size={14} weight="bold" />
             Add update
           </button>
         </div>
+
+        <div className="flex flex-wrap gap-2 px-4 pb-3">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              aria-current={tab === t.id ? 'page' : undefined}
+              className={cn(
+                'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border transition-colors',
+                tab === t.id
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-transparent text-foreground/60 border-border hover:bg-muted hover:text-foreground'
+              )}
+            >
+              {t.label}
+              {counts[t.id] !== undefined && (
+                <span className={cn('tabular-nums', tab === t.id ? 'text-background/70' : 'text-foreground/40')}>
+                  {counts[t.id]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </header>
 
       <div className="px-4 py-4 space-y-6">
-        {/* Mission hero */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl overflow-hidden border bg-card">
-          {mission.coverImageUrl && (
-            <div className="relative h-48 overflow-hidden">
-              <img src={mission.coverImageUrl} alt={mission.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h2 className="text-2xl font-bold text-white">{mission.title}</h2>
+        {tab === 'details' && (
+          <>
+            {/* Banner */}
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl overflow-hidden border bg-card">
+              {mission.coverImageUrl && (
+                <div className="relative h-48 overflow-hidden">
+                  <img src={mission.coverImageUrl} alt={mission.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h2 className="text-2xl font-bold text-white">{mission.title}</h2>
+                  </div>
+                </div>
+              )}
+              <div className="p-4">
+                <p className="text-sm text-foreground leading-relaxed mb-3">{mission.statement}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed italic">{mission.vision}</p>
               </div>
-            </div>
-          )}
-          <div className="p-4">
-            <p className="text-sm text-foreground leading-relaxed mb-3">{mission.statement}</p>
-            <p className="text-xs text-muted-foreground leading-relaxed italic">{mission.vision}</p>
-          </div>
-        </motion.div>
+            </motion.section>
 
-        {/* Field updates — post mission information with a photo */}
-        <section aria-label="Field updates">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Field updates</h2>
-          {updates && updates.length > 0 ? (
-            <div className="space-y-4">
-              {updates.map(u => (
-                <MissionUpdateCard key={u.id} update={u} onRemove={removeUpdate} />
+            {/* The map is the heart of the page, so it sits inline under the
+                banner rather than behind a button. Expand opens the full view. */}
+            <section aria-label="Mission map">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Mission across India
+                </h2>
+                <button
+                  onClick={() => setMapExpanded(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full border hover:bg-muted transition-colors"
+                >
+                  <ArrowsOut size={13} />
+                  Expand
+                </button>
+              </div>
+              <div className="rounded-2xl border overflow-hidden">
+                <MissionMap
+                  updates={updates ?? []}
+                  className="relative h-[320px] sm:h-[400px] bg-muted"
+                />
+              </div>
+            </section>
+
+            {/* Topics */}
+            <section>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Topics</h2>
+              <div className="flex gap-2 flex-wrap">
+                {mission.topics.map(topic => (
+                  <span
+                    key={topic.id}
+                    className="text-sm px-4 py-2 rounded-full font-medium"
+                    style={{
+                      backgroundColor: topic.color ? topic.color + '20' : '#f0fdf4',
+                      color: topic.color ?? '#1a6b3c',
+                    }}
+                  >
+                    {topic.name}
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            {/* Impact */}
+            <section>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Impact snapshot</h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {impactStats.map(stat => (
+                  <div key={stat.label} className="rounded-2xl border bg-card p-3 text-center">
+                    <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Initiatives */}
+            {initiatives && initiatives.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Initiatives</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {initiatives.map((init, i) => <InitiativeCard key={init.id} initiative={init} index={i} />)}
+                </div>
+              </section>
+            )}
+
+            {/* Field updates */}
+            <section aria-label="Field updates">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Field updates</h2>
+              {updates && updates.length > 0 ? (
+                <div className="space-y-4">
+                  {updates.map(u => <MissionUpdateCard key={u.id} update={u} onRemove={removeUpdate} />)}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setUpdateDialogOpen(true)}
+                  className="w-full rounded-2xl border border-dashed p-5 text-left hover:bg-muted/40 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">Log a field update</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Take or choose a photo — location, capture time and camera details are read from
+                    the photo automatically where available.
+                  </p>
+                </button>
+              )}
+            </section>
+
+            {/* Closing call to action */}
+            <JoinMissionCta missionTitle={mission.title} supporterCount={mission.impact.peopleReached} />
+          </>
+        )}
+
+        {tab === 'events' && (
+          events && events.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {events.map(event => (
+                <Link
+                  key={event.id}
+                  href={`/leader/events/${event.id}`}
+                  className="block rounded-2xl border bg-card overflow-hidden hover:shadow-md transition-all"
+                >
+                  {event.coverImageUrl && (
+                    <div className="relative h-36 overflow-hidden">
+                      <img src={event.coverImageUrl} alt={event.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                      <h3 className="absolute bottom-3 left-3 right-3 text-base font-bold text-white">{event.title}</h3>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="text-xs text-muted-foreground line-clamp-2">{event.description}</p>
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><MapPin size={11} />{event.stateName}</span>
+                      <span className="flex items-center gap-1"><Users size={11} />{formatNumber(event.participantCount)}</span>
+                      <span className="flex items-center gap-1">
+                        <CalendarBlank size={11} />{event.isOngoing ? 'Ongoing' : formatDate(event.date)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <button
-              onClick={() => setUpdateDialogOpen(true)}
-              className="w-full rounded-2xl border border-dashed p-5 text-left hover:bg-muted/40 transition-colors"
-            >
-              <p className="text-sm font-medium text-foreground">Log a field update</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Take or choose a photo — location, capture time and camera details are read
-                from the photo automatically where available.
-              </p>
-            </button>
-          )}
-        </section>
+            <EmptyState icon={<CalendarBlank size={44} />} title="No events yet" description="Mission events will appear here." />
+          )
+        )}
 
-        {/* Topics */}
-        <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Topics</h2>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setActiveTopicId(null)}
-              className={`text-sm px-4 py-2 rounded-full font-medium transition-colors ${!activeTopicId ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-            >
-              All
-            </button>
-            {mission.topics.map(topic => (
-              <button
-                key={topic.id}
-                onClick={() => setActiveTopicId(topic.id === activeTopicId ? null : topic.id)}
-                className="text-sm px-4 py-2 rounded-full font-medium transition-all hover:opacity-90"
-                style={topic.id === activeTopicId ? { backgroundColor: topic.color ?? '#1a6b3c', color: 'white' } : { backgroundColor: topic.color ? topic.color + '20' : '#f0fdf4', color: topic.color ?? '#1a6b3c' }}
-              >
-                {topic.name}
-              </button>
-            ))}
-          </div>
+        {tab === 'posts' && (
+          missionPosts.length > 0 ? (
+            <div className="space-y-4">
+              {missionPosts.map(p => <PostCard key={p.id} post={p} />)}
+            </div>
+          ) : (
+            <EmptyState icon={<Article size={44} />} title="No mission posts yet" description="Posts tagged to this mission will appear here." />
+          )
+        )}
 
-          {activeTopic && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 p-3 rounded-xl bg-muted text-sm text-muted-foreground"
-            >
-              {activeTopic.description}
-              <div className="flex gap-4 mt-2 text-xs">
-                <span>{formatNumber(activeTopic.postCount)} posts</span>
-                <span>{activeTopic.eventCount} events</span>
-                <span>{formatNumber(activeTopic.followerCount)} followers</span>
-              </div>
-            </motion.div>
-          )}
-        </section>
-
-        {/* Initiatives */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Initiatives</h2>
-            <Link href="/leader/events" className="text-xs text-primary font-medium">Events</Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {initiatives?.map((init, i) => (
-              <InitiativeCard key={init.id} initiative={init} index={i} />
-            ))}
-          </div>
-        </section>
-
-        {/* Geography */}
-        <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Geographic focus</h2>
-          <div className="rounded-2xl border bg-card p-4">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { name: 'Tamil Nadu', districts: 14, events: 3, projects: 4, color: '#059669' },
-                { name: 'Karnataka', districts: 3, events: 1, projects: 1, color: '#d97706' },
-                { name: 'Andhra Pradesh', districts: 2, events: 0, projects: 0, color: '#7c3aed' },
-              ].map(state => (
+        {tab === 'reels' && (
+          missionReels.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {missionReels.map(r => (
                 <Link
-                  key={state.name}
-                  href={`/leader/events?state=${state.name}`}
-                  className="p-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+                  key={r.id}
+                  href="/leader/reels"
+                  className="relative block aspect-[9/16] rounded-2xl overflow-hidden border bg-muted group"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: state.color }} />
-                    <p className="text-sm font-semibold">{state.name}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-0.5">
-                    <p>{state.districts} districts active</p>
-                    <p>{state.events} events · {state.projects} projects</p>
+                  {r.posterUrl && (
+                    <img src={r.posterUrl} alt={r.caption ?? ''} className="w-full h-full object-cover" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <p className="text-[11px] text-white line-clamp-2 leading-snug">{r.caption}</p>
+                    <p className="mt-1 text-[10px] text-white/70 tabular-nums">
+                      {formatNumber(r.viewCount ?? 0)} views · {formatDuration(r.duration ?? 0)}
+                    </p>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
+          ) : (
+            <EmptyState icon={<FilmStrip size={44} />} title="No mission reels yet" description="Reels tagged to this mission will appear here." />
+          )
+        )}
 
-        {/* Impact */}
-        <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Impact snapshot</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {impactStats.map(stat => (
-              <div key={stat.label} className="rounded-2xl border bg-card p-3 text-center">
-                <p className="text-xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Projects */}
-        {projects && projects.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Projects & Talent</h2>
-              <Link href="/leader/projects" className="text-xs text-primary font-medium">See all</Link>
-            </div>
-            <div className="space-y-3">
-              {projects.slice(0, 2).map(project => (
+        {tab === 'organizations' && (
+          projects && projects.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {projects.map(project => (
                 <Link
                   key={project.id}
                   href={`/leader/projects/${project.id}`}
-                  className="flex items-center gap-3 rounded-2xl border bg-card p-3 card-hover hover:shadow-md transition-all"
+                  className="block rounded-2xl border bg-card overflow-hidden hover:shadow-md transition-all"
                 >
-                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                  <div className="h-36 overflow-hidden">
                     <img src={project.heroImageUrl} alt={project.title} className="w-full h-full object-cover" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{project.title}</p>
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-foreground">{project.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{project.location}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{project.tagline}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{project.tagline}</p>
                   </div>
                 </Link>
               ))}
             </div>
-          </section>
+          ) : (
+            <EmptyState icon={<Briefcase size={44} />} title="No organisations yet" description="Companies discovered through the mission will appear here." />
+          )
+        )}
+
+        {tab === 'opportunities' && (
+          opportunities && opportunities.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {opportunities.map(opp => <OpportunityCard key={opp.id} opportunity={opp} />)}
+            </div>
+          ) : (
+            <EmptyState icon={<Star size={44} />} title="No opportunities yet" description="Opportunities linked to this mission will appear here." />
+          )
         )}
       </div>
 
       <MissionUpdateDialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)} />
-      <MissionMapView open={mapViewOpen} onClose={() => setMapViewOpen(false)} updates={updates ?? []} />
+      <MissionMapView open={mapExpanded} onClose={() => setMapExpanded(false)} updates={updates ?? []} />
     </div>
   )
 }

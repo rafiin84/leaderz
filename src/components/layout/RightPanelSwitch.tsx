@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation'
 import { RightPanel } from './RightPanel'
 import { FollowersRightPanel } from './FollowersRightPanel'
 import { ReelsRightPanel } from './ReelsRightPanel'
+import { MissionRightPanel } from './MissionRightPanel'
 
 /**
  * Chooses the right-hand panel for the current route.
@@ -16,6 +17,7 @@ export function RightPanelSwitch() {
 
   if (pathname.startsWith('/leader/followers')) return <FollowersRightPanel />
   if (pathname.startsWith('/leader/reels')) return <ReelsRightPanel />
+  if (pathname.startsWith('/leader/mission')) return <MissionRightPanel />
 
   return <RightPanel />
 }

@@ -13,10 +13,10 @@ export interface NavItem {
  *  sidebar and by the mobile "More" sheet so the two cannot drift apart. */
 export const NAV_ITEMS: NavItem[] = [
   { href: '/leader/home', icon: House, label: 'Home' },
+  { href: '/leader/mission', icon: Target, label: 'Mission' },
   { href: '/leader/followers', icon: Users, label: 'Followers' },
   { href: '/leader/contacts', icon: AddressBook, label: 'Contacts' },
   { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
-  { href: '/leader/mission', icon: Target, label: 'Mission' },
   { href: '/leader/events', icon: CalendarBlank, label: 'Events' },
   { href: '/leader/projects', icon: Briefcase, label: 'Companies' },
   { href: '/leader/opportunities', icon: Star, label: 'Opportunities' },
