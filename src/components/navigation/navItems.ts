@@ -1,5 +1,5 @@
 import {
-  House, FilmStrip, AddressBook, Target, CalendarBlank,
+  HouseLine, FilmStrip, AddressBook, Target, CalendarBlank,
   Briefcase, Star, Users, ChatCircleDots, Bell,
 } from '@phosphor-icons/react'
 
@@ -12,7 +12,7 @@ export interface NavItem {
 /** Single source of truth for the primary destinations — used by the desktop
  *  sidebar and by the mobile "More" sheet so the two cannot drift apart. */
 export const NAV_ITEMS: NavItem[] = [
-  { href: '/leader/home', icon: House, label: 'Home' },
+  { href: '/leader/home', icon: HouseLine, label: 'Home' },
   { href: '/leader/contacts', icon: AddressBook, label: 'My Contacts' },
   { href: '/leader/messages', icon: ChatCircleDots, label: 'Messages' },
   { href: '/leader/notifications', icon: Bell, label: 'Notifications' },
