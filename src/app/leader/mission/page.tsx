@@ -18,6 +18,7 @@ import { MissionUpdateCard } from '@/components/mission/MissionUpdateCard'
 import { MissionMapView } from '@/components/mission/MissionMapView'
 import { MissionMap } from '@/components/mission/MissionMap'
 import { JoinMissionCta } from '@/components/mission/JoinMissionCta'
+import { MissionLongDescription } from '@/components/mission/MissionLongDescription'
 import { PostCard } from '@/components/content/PostCard'
 import { ImageWithFallback } from '@/components/common/ImageWithFallback'
 import { Skeleton } from '@/components/common/Skeleton'
@@ -150,18 +151,22 @@ export default function MissionPage() {
               <div className="p-4">
                 <p className="text-sm text-foreground leading-relaxed mb-3">{mission.statement}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed italic">{mission.vision}</p>
+                {mission.longDescription && mission.longDescription.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <MissionLongDescription sections={mission.longDescription} />
+                  </div>
+                )}
               </div>
             </motion.section>
 
             {/* The map is the heart of the page, so it sits inline under the
                 banner rather than behind a button. Expand opens the full view. */}
-            {/* Full-bleed: -mx-4 cancels the container's px-4 so the map runs
-                the full width of the column with no gap on either side. */}
-            <section aria-label="Mission map" className="-mx-4">
-              <h2 className="px-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            {/* Aligned with the other sections rather than full-bleed. */}
+            <section aria-label="Mission map">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Mission across India
               </h2>
-              <div className="relative border-y overflow-hidden">
+              <div className="relative rounded-2xl border overflow-hidden">
                 <MissionMap
                   updates={updates ?? []}
                   className="relative h-[320px] sm:h-[440px] bg-muted"

@@ -1,11 +1,19 @@
 import type { ID, Timestamps, MediaItem } from './common'
 
+/** One titled block of the mission's long-form write-up. */
+export interface MissionSection {
+  heading: string
+  body: string
+}
+
 export interface Mission extends Timestamps {
   id: ID
   tenantId: ID
   title: string
   statement: string
   vision: string
+  /** Long-form write-up, shown collapsed with a read-more toggle. */
+  longDescription?: MissionSection[]
   coverImageUrl?: string
   topics: Topic[]
   initiativeIds: ID[]
