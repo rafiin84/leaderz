@@ -20,7 +20,7 @@ export default function ContactsPage() {
   const { contactSearchQuery, setContactSearch } = useUIStore()
   const { data: contacts, isLoading } = useContacts(activeTenantId, userRole)
   const [tab, setTab] = useState<Tab>('all')
-  const [view, setView] = useState<'cards' | 'table'>('cards')
+  const [view, setView] = useState<'cards' | 'table'>('table')
 
   /** Only the leader gets a Personal tab. The data layer already withholds
    *  leader_only contacts from every other role, so this hides a tab that

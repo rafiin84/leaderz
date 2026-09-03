@@ -242,6 +242,393 @@ export const MOCK_CONTACTS: Record<string, Contact[]> = {
       createdAt: '2025-10-01T00:00:00Z',
       updatedAt: '2026-07-01T00:00:00Z',
     },
+    {
+      "id": "c-009",
+      "tenantId": "tenant-sridhar",
+      "name": "Meenakshi Sundaram",
+      "title": "Additional Chief Secretary",
+      "organization": "Government of Tamil Nadu — Industries Dept",
+      "phone": "+91 44 2567 1200",
+      "email": "meenakshi@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=200&h=200&fit=crop",
+      "location": "Chennai, Tamil Nadu",
+      "categories": [
+            "government"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Key channel for industrial policy and district clearances.",
+      "howWeKnow": "Met during the Tuticorin MSME roundtable, 2024.",
+      "lastInteractionDate": "2026-08-20T10:00:00Z",
+      "lastInteractionType": "meeting",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "policy",
+            "government"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-20T10:00:00Z"
+    },
+    {
+      "id": "c-010",
+      "tenantId": "tenant-sridhar",
+      "name": "R. Kalaiselvi",
+      "title": "Member of Parliament",
+      "organization": "Lok Sabha — Tirunelveli",
+      "phone": "+91 98410 22110",
+      "email": "r.@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop",
+      "location": "Tirunelveli, Tamil Nadu",
+      "categories": [
+            "political",
+            "social_public"
+      ],
+      "privacyLevel": "leader_private",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Supportive of the rural engineering agenda in her constituency.",
+      "howWeKnow": "Introduced by the district collector in 2025.",
+      "lastInteractionDate": "2026-08-12T15:30:00Z",
+      "lastInteractionType": "call",
+      "nextFollowUpDate": "2026-09-25T00:00:00Z",
+      "nextFollowUpNote": "Share the Tirunelveli skills proposal",
+      "importantDates": [
+            {
+                  "id": "id-010",
+                  "type": "birthday",
+                  "label": "Birthday",
+                  "date": "1971-02-18",
+                  "recurring": true
+            }
+      ],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "constituency"
+      ],
+      "isFavorite": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-12T15:30:00Z"
+    },
+    {
+      "id": "c-011",
+      "tenantId": "tenant-sridhar",
+      "name": "Ashok Rajagopalan",
+      "title": "Managing Director",
+      "organization": "Cheran Textiles",
+      "phone": "+91 98430 55221",
+      "email": "ashok@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=200&h=200&fit=crop",
+      "location": "Erode, Tamil Nadu",
+      "categories": [
+            "industrialists_business"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Runs three units in Erode. Interested in apprentice hiring.",
+      "howWeKnow": "Met at CII Coimbatore, 2023.",
+      "lastInteractionDate": "2026-07-30T11:00:00Z",
+      "lastInteractionType": "meeting",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "manufacturing",
+            "hiring"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-07-30T11:00:00Z"
+    },
+    {
+      "id": "c-012",
+      "tenantId": "tenant-sridhar",
+      "name": "Divya Ramanathan",
+      "title": "Founder & CEO",
+      "organization": "Kaveri Agritech",
+      "phone": "+91 99400 78345",
+      "email": "divya@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+      "location": "Trichy, Tamil Nadu",
+      "categories": [
+            "entrepreneurs_founders"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Building cold-chain logistics for smallholder farmers.",
+      "howWeKnow": "Applied to the Rural Entrepreneur Fund.",
+      "lastInteractionDate": "2026-08-25T09:15:00Z",
+      "lastInteractionType": "call",
+      "nextFollowUpDate": "2026-09-15T00:00:00Z",
+      "nextFollowUpNote": "Review her Series A deck",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "agritech",
+            "startup"
+      ],
+      "isFavorite": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-25T09:15:00Z"
+    },
+    {
+      "id": "c-013",
+      "tenantId": "tenant-sridhar",
+      "name": "Vivek Anand",
+      "title": "Partner",
+      "organization": "Ganges Capital",
+      "phone": "+91 98200 61234",
+      "email": "vivek@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
+      "location": "Mumbai, Maharashtra",
+      "categories": [
+            "investors_finance"
+      ],
+      "privacyLevel": "leader_private",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Looks at early-stage deep tech. Open to rural-first companies.",
+      "howWeKnow": "Introduced by a portfolio founder in 2025.",
+      "lastInteractionDate": "2026-08-05T14:00:00Z",
+      "lastInteractionType": "call",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "investor",
+            "deeptech"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-05T14:00:00Z"
+    },
+    {
+      "id": "c-014",
+      "tenantId": "tenant-sridhar",
+      "name": "Prof. Lakshmi Narasimhan",
+      "title": "Dean of Engineering",
+      "organization": "NIT Tiruchirappalli",
+      "phone": "+91 43124 50100",
+      "email": "prof.@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
+      "location": "Trichy, Tamil Nadu",
+      "categories": [
+            "academia_education"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Runs the industry-interface cell. Placement partner for rural students.",
+      "howWeKnow": "Campus visit, 2024.",
+      "lastInteractionDate": "2026-08-14T10:30:00Z",
+      "lastInteractionType": "meeting",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "placements",
+            "academia"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-14T10:30:00Z"
+    },
+    {
+      "id": "c-015",
+      "tenantId": "tenant-sridhar",
+      "name": "Aarti Krishnan",
+      "title": "Bureau Chief",
+      "organization": "Business Standard — South",
+      "phone": "+91 98450 33987",
+      "email": "aarti@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
+      "location": "Bengaluru, Karnataka",
+      "categories": [
+            "media_communication"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Covers manufacturing and rural economy. Fair and thorough.",
+      "howWeKnow": "Interviewed the Tenkasi office in 2025.",
+      "lastInteractionDate": "2026-08-27T16:00:00Z",
+      "lastInteractionType": "message",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "press"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-27T16:00:00Z"
+    },
+    {
+      "id": "c-016",
+      "tenantId": "tenant-sridhar",
+      "name": "S. Palanivel",
+      "title": "District Collector",
+      "organization": "Government of Tamil Nadu — Dindigul",
+      "phone": "+91 45123 40011",
+      "email": "s.@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop",
+      "location": "Dindigul, Tamil Nadu",
+      "categories": [
+            "government"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Helpful on land and utility approvals for the Dindigul cluster.",
+      "howWeKnow": "District administration meeting, 2026.",
+      "lastInteractionDate": "2026-08-29T08:45:00Z",
+      "lastInteractionType": "call",
+      "nextFollowUpDate": "2026-09-12T00:00:00Z",
+      "nextFollowUpNote": "Follow up on the industrial plot allotment",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "district",
+            "approvals"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-29T08:45:00Z"
+    },
+    {
+      "id": "c-017",
+      "tenantId": "tenant-sridhar",
+      "name": "Nandini Iyer",
+      "title": "Head of CSR",
+      "organization": "Sundaram Finance",
+      "phone": "+91 44 2852 7700",
+      "email": "nandini@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=200&h=200&fit=crop",
+      "location": "Chennai, Tamil Nadu",
+      "categories": [
+            "investors_finance",
+            "organizations_institutions"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Co-funds the Rural Entrepreneur Seed Grant.",
+      "howWeKnow": "Partnership discussion, 2025.",
+      "lastInteractionDate": "2026-08-18T12:00:00Z",
+      "lastInteractionType": "meeting",
+      "importantDates": [
+            {
+                  "id": "id-017",
+                  "type": "birthday",
+                  "label": "Birthday",
+                  "date": "1979-11-04",
+                  "recurring": true
+            }
+      ],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "csr",
+            "funding"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-18T12:00:00Z"
+    },
+    {
+      "id": "c-018",
+      "tenantId": "tenant-sridhar",
+      "name": "Mohan Raj",
+      "title": "General Secretary",
+      "organization": "Tamil Nadu Small Industries Association",
+      "phone": "+91 98940 12007",
+      "email": "mohan@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop",
+      "location": "Coimbatore, Tamil Nadu",
+      "categories": [
+            "organizations_institutions",
+            "professional_network"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Represents 4,000 small units. Useful for cluster outreach.",
+      "howWeKnow": "MSME conclave, 2024.",
+      "lastInteractionDate": "2026-07-22T13:20:00Z",
+      "lastInteractionType": "meeting",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "msme",
+            "association"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-07-22T13:20:00Z"
+    },
+    {
+      "id": "c-019",
+      "tenantId": "tenant-sridhar",
+      "name": "Bhavani Shankar",
+      "title": "Principal Scientist",
+      "organization": "ICAR — Tamil Nadu",
+      "phone": "+91 44 2836 1900",
+      "email": "bhavani@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop",
+      "location": "Chennai, Tamil Nadu",
+      "categories": [
+            "academia_education",
+            "professional_network"
+      ],
+      "privacyLevel": "team_accessible",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Advises on climate-resilient cropping for the farm programme.",
+      "howWeKnow": "Introduced through the agri university.",
+      "lastInteractionDate": "2026-08-08T09:00:00Z",
+      "lastInteractionType": "call",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "agriculture",
+            "research"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-08T09:00:00Z"
+    },
+    {
+      "id": "c-020",
+      "tenantId": "tenant-sridhar",
+      "name": "Gopal Venkatesh",
+      "title": "Executive Producer",
+      "organization": "Puthiya Thalaimurai TV",
+      "phone": "+91 98411 66220",
+      "email": "gopal@example.com",
+      "avatarUrl": "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=200&h=200&fit=crop",
+      "location": "Chennai, Tamil Nadu",
+      "categories": [
+            "media_communication",
+            "social_public"
+      ],
+      "privacyLevel": "leader_private",
+      "isPersonallyVerified": true,
+      "relationshipSummary": "Runs a weekly rural development segment.",
+      "howWeKnow": "Panel appearance, 2025.",
+      "lastInteractionDate": "2026-08-24T18:30:00Z",
+      "lastInteractionType": "message",
+      "nextFollowUpDate": "2026-09-18T00:00:00Z",
+      "nextFollowUpNote": "Confirm the studio date",
+      "importantDates": [],
+      "notes": [],
+      "interactions": [],
+      "tags": [
+            "tv",
+            "press"
+      ],
+      "isFavorite": false,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2026-08-24T18:30:00Z"
+    },
     // --- Personal contacts -------------------------------------------------
     // categories: ['personal'] + privacyLevel: 'leader_only'. The privacy level
     // is what actually protects these: fetchContacts runs canViewContact, and
