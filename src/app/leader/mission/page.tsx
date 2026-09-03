@@ -151,16 +151,15 @@ export default function MissionPage() {
               <div className="p-4">
                 <p className="text-sm text-foreground leading-relaxed mb-3">{mission.statement}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed italic">{mission.vision}</p>
-                {mission.longDescription && mission.longDescription.length > 0 && (
-                  <div className="mt-4 pt-4 border-t">
-                    <MissionLongDescription sections={mission.longDescription} />
-                  </div>
-                )}
               </div>
             </motion.section>
 
             {/* The map is the heart of the page, so it sits inline under the
                 banner rather than behind a button. Expand opens the full view. */}
+            {/* High on the page: at the bottom it sat below the map, the
+                impact grid and the field updates, so nobody reached it. */}
+            <JoinMissionCta missionTitle={mission.title} supporterCount={mission.impact.peopleReached} />
+
             {/* Aligned with the other sections rather than full-bleed. */}
             <section aria-label="Mission map">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -183,6 +182,15 @@ export default function MissionPage() {
                 </button>
               </div>
             </section>
+
+            {mission.longDescription && mission.longDescription.length > 0 && (
+              <section aria-label="About this mission" className="rounded-2xl border bg-card p-4">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  About this mission
+                </h2>
+                <MissionLongDescription sections={mission.longDescription} />
+              </section>
+            )}
 
             {/* Topics and Impact live in the right panel, but that panel is
                 xl-only — so they stay here below xl rather than vanishing on
@@ -250,8 +258,6 @@ export default function MissionPage() {
               )}
             </section>
 
-            {/* Closing call to action */}
-            <JoinMissionCta missionTitle={mission.title} supporterCount={mission.impact.peopleReached} />
           </>
         )}
 
