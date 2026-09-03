@@ -1,5 +1,6 @@
 'use client'
 import { CalendarBlank, MapPin, ArrowUpRight } from '@phosphor-icons/react'
+import Link from 'next/link'
 import type { Opportunity } from '@/types/mission'
 import { formatShortDate, opportunityTypeLabel } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
@@ -21,14 +22,17 @@ interface Props {
 
 export function OpportunityCard({ opportunity: opp }: Props) {
   return (
-    <div className="rounded-2xl border bg-card p-4 card-hover hover:shadow-md transition-all">
+    <Link
+      href={`/leader/opportunities/${opp.id}`}
+      className="block rounded-2xl border bg-card p-4 card-hover hover:shadow-md transition-all"
+    >
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className={cn('text-[10px] font-semibold px-2.5 py-0.5 rounded-full', typeColors[opp.type])}>
           {opportunityTypeLabel(opp.type)}
         </span>
-        <button className="p-1 rounded-lg hover:bg-muted transition-colors" aria-label="Open opportunity">
-          <ArrowUpRight size={14} className="text-muted-foreground" />
-        </button>
+        <span className="p-1 rounded-lg text-muted-foreground" aria-hidden>
+          <ArrowUpRight size={14} />
+        </span>
       </div>
 
       <h3 className="text-sm font-semibold text-foreground mb-0.5">{opp.title}</h3>
@@ -59,6 +63,6 @@ export function OpportunityCard({ opportunity: opp }: Props) {
           </span>
         )}
       </div>
-    </div>
+    </Link>
   )
 }

@@ -2,10 +2,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gear, PencilSimple, CaretLeft, CaretRight, Bell } from '@phosphor-icons/react'
+import { Gear, PencilSimple, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
-import { useLeader, useNotifications } from '@/queries'
+import { useLeader } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
 import { useUIStore } from '@/stores/uiStore'
 import { NAV_ITEMS } from './navItems'
@@ -16,9 +16,7 @@ export function DesktopSidebar() {
   const pathname = usePathname()
   const { activeTenantId } = useAppStore()
   const { data: leader } = useLeader(activeTenantId)
-  const { setPostComposerOpen, setNotificationsPanelOpen } = useUIStore()
-  const { data: notifications } = useNotifications(activeTenantId)
-  const unread = notifications?.filter(n => !n.read).length ?? 0
+  const { setPostComposerOpen } = useUIStore()
 
   const itemClass = (active: boolean) => cn(
     'flex items-center rounded-full transition-colors duration-150',
@@ -61,35 +59,13 @@ export function DesktopSidebar() {
           </button>
         </div>
 
-        {/* Notifications — the app's single entry point again, back beside
-            the other destinations rather than in a page header. */}
-        <button
-          onClick={() => setNotificationsPanelOpen(true)}
-          title="Notifications"
-          aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-          className={cn(
-            'relative flex items-center rounded-full text-[15px] font-normal text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors',
-            collapsed ? 'justify-center p-2.5 w-10 mx-auto mb-0.5' : 'gap-3 px-3 py-2.5 w-full mb-0'
-          )}
-        >
-          <span className="relative shrink-0">
-            <Bell size={22} weight="regular" />
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 bg-foreground text-background text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </span>
-          {!collapsed && <span>Notifications</span>}
-        </button>
-
         {/* Nav items */}
         <nav className={cn('flex-1 space-y-0.5', collapsed ? 'w-full flex flex-col items-center' : '')} aria-label="Main navigation">
           {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
             const isActive = pathname.startsWith(href)
             return (
               <Link key={href} href={href} title={collapsed ? label : undefined} className={itemClass(isActive)}>
-                <Icon size={22} weight={isActive ? 'fill' : 'regular'} />
+                <Icon size={24} weight={isActive ? 'fill' : 'regular'} />
                 {!collapsed && <span className="text-[15px]">{label}</span>}
               </Link>
             )
@@ -116,7 +92,7 @@ export function DesktopSidebar() {
             title={collapsed ? 'Settings' : undefined}
             className={itemClass(pathname.startsWith('/leader/settings'))}
           >
-            <Gear size={22} weight={pathname.startsWith('/leader/settings') ? 'fill' : 'regular'} />
+            <Gear size={24} weight={pathname.startsWith('/leader/settings') ? 'fill' : 'regular'} />
             {!collapsed && <span className="text-[15px]">Settings</span>}
           </Link>
 

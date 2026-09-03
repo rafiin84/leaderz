@@ -1,6 +1,6 @@
 import {
   House, FilmStrip, AddressBook, Target, CalendarBlank,
-  Briefcase, Star, Users,
+  Briefcase, Star, Users, ChatCircleDots, Bell,
 } from '@phosphor-icons/react'
 
 export interface NavItem {
@@ -13,19 +13,21 @@ export interface NavItem {
  *  sidebar and by the mobile "More" sheet so the two cannot drift apart. */
 export const NAV_ITEMS: NavItem[] = [
   { href: '/leader/home', icon: House, label: 'Home' },
+  { href: '/leader/contacts', icon: AddressBook, label: 'My Contacts' },
+  { href: '/leader/messages', icon: ChatCircleDots, label: 'Messages' },
+  { href: '/leader/notifications', icon: Bell, label: 'Notifications' },
+  { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
   { href: '/leader/mission', icon: Target, label: 'Mission' },
   { href: '/leader/followers', icon: Users, label: 'Followers' },
-  { href: '/leader/contacts', icon: AddressBook, label: 'Contacts' },
-  { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
   { href: '/leader/events', icon: CalendarBlank, label: 'Events' },
-  { href: '/leader/projects', icon: Briefcase, label: 'Companies' },
+  { href: '/leader/projects', icon: Briefcase, label: 'Organizations' },
   { href: '/leader/opportunities', icon: Star, label: 'Opportunities' },
 ]
 
 /** The four that get their own slot in the mobile bottom bar. */
 export const MOBILE_PRIMARY_HREFS = [
   '/leader/home',
+  '/leader/messages',
   '/leader/mission',
-  '/leader/reels',
   '/leader/contacts',
 ]

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { RightPanelSwitch } from './RightPanelSwitch'
 
 /** Routes that drop the right panel and take its width instead. */
-const FULL_WIDTH_ROUTES = ['/leader/contacts']
+const FULL_WIDTH_ROUTES = ['/leader/contacts', '/leader/messages']
 
 /**
  * Content column plus right panel.

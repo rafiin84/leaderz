@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchMission, fetchInitiatives, fetchInitiative, fetchEvents, fetchEvent, fetchProjects, fetchProject, fetchOpportunities } from '@/lib/api'
+import { fetchMission, fetchInitiatives, fetchInitiative, fetchEvents, fetchEvent, fetchProjects, fetchProject, fetchOpportunities, fetchOpportunity } from '@/lib/api'
 
 export function useMission(tenantId: string) {
   return useQuery({ queryKey: ['mission', tenantId], queryFn: () => fetchMission(tenantId), staleTime: 5 * 60 * 1000 })
@@ -31,4 +31,8 @@ export function useProject(tenantId: string, id: string) {
 
 export function useOpportunities(tenantId: string) {
   return useQuery({ queryKey: ['opportunities', tenantId], queryFn: () => fetchOpportunities(tenantId), staleTime: 5 * 60 * 1000 })
+}
+
+export function useOpportunity(tenantId: string, id: string) {
+  return useQuery({ queryKey: ['opportunity', tenantId, id], queryFn: () => fetchOpportunity(tenantId, id), enabled: !!id })
 }

@@ -33,3 +33,7 @@ export async function fetchProject(tenantId: string, id: string): Promise<Projec
 export async function fetchOpportunities(tenantId: string): Promise<Opportunity[]> {
   return delay(MOCK_OPPORTUNITIES[tenantId] ?? [])
 }
+
+export async function fetchOpportunity(tenantId: string, id: string): Promise<Opportunity | null> {
+  return delay((MOCK_OPPORTUNITIES[tenantId] ?? []).find(o => o.id === id) ?? null)
+}
