@@ -36,7 +36,7 @@ export function OpportunityCard({ opportunity: opp }: Props) {
       <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{opp.description}</p>
 
       {opp.eligibility && (
-        <p className="text-xs text-foreground bg-muted rounded-lg px-3 py-2 mb-3 line-clamp-2">
+        <p className="text-xs text-foreground bg-muted rounded-lg px-3 py-2 mb-3 leading-relaxed">
           <span className="font-medium">Eligibility: </span>{opp.eligibility}
         </p>
       )}
