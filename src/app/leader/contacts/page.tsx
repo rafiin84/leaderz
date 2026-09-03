@@ -73,9 +73,6 @@ export default function ContactsPage() {
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Private to you — no one else in the system can see these.
-            </p>
           </div>
           {/* Cards for scanning, table for packing more rows on screen. */}
           <div className="shrink-0 flex items-center rounded-full border p-0.5" role="group" aria-label="View">
