@@ -130,14 +130,33 @@ export default function ContactDetailClient() {
 
       <div className="px-4 py-5 space-y-5">
         {/* Snapshot */}
-        <section className="rounded-2xl border bg-card p-5">
-          <div className="flex items-start gap-4 text-left">
-            <Avatar src={contact.avatarUrl} name={contact.name} size="2xl" verified={contact.isPersonallyVerified} />
-            <div className="flex-1 min-w-0 pt-0.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl font-bold text-foreground">{contact.name}</h2>
-                {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
-              </div>
+        <section className="rounded-2xl border bg-card overflow-hidden">
+          {/* Cover */}
+          <div className="relative h-24 sm:h-28 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
+            <div
+              className="absolute inset-0 opacity-[0.12]"
+              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
+            />
+            {contact.isFavorite && (
+              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center">
+                <Star size={15} className="text-amber-400" weight="fill" />
+              </span>
+            )}
+          </div>
+
+          <div className="px-5 pb-5 text-left">
+            <div className="-mt-10">
+              <Avatar
+                src={contact.avatarUrl}
+                name={contact.name}
+                size="2xl"
+                verified={contact.isPersonallyVerified}
+                className="ring-4 ring-card shadow-lg"
+              />
+            </div>
+
+            <div className="mt-3">
+              <h2 className="text-2xl font-bold text-foreground">{contact.name}</h2>
               {(contact.title || contact.organization) && (
                 <p className="text-sm text-muted-foreground mt-0.5">
                   {contact.title}
@@ -169,7 +188,6 @@ export default function ContactDetailClient() {
                 </div>
               )}
             </div>
-          </div>
 
           {/* At-a-glance stats */}
           {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
@@ -195,9 +213,10 @@ export default function ContactDetailClient() {
             </div>
           )}
 
-          {contact.relationshipSummary && (
-            <p className="text-sm text-foreground leading-relaxed mt-4 pt-4 border-t">{contact.relationshipSummary}</p>
-          )}
+            {contact.relationshipSummary && (
+              <p className="text-sm text-foreground leading-relaxed mt-4 pt-4 border-t">{contact.relationshipSummary}</p>
+            )}
+          </div>
         </section>
 
         {/* Primary actions */}
