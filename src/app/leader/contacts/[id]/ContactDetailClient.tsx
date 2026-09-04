@@ -205,9 +205,9 @@ export default function ContactDetailClient() {
                     )}
                   </div>
                   {contact.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
+                    <div className="flex items-center gap-1.5 mt-2">
                       {contact.categories.map(cat => (
-                        <span key={cat} className="text-xs text-white/70 px-2.5 py-1 rounded-lg border border-white/20">
+                        <span key={cat} className="text-xs text-white/70 px-2.5 py-1 rounded-lg border border-white/10 whitespace-nowrap">
                           {CONTACT_CATEGORY_LABELS[cat]}
                         </span>
                       ))}
