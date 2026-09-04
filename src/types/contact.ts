@@ -47,6 +47,7 @@ export interface Contact extends Timestamps {
   relationshipSummary?: string
   howWeKnow?: string
   bio?: string
+  education?: string[]
   lastInteractionDate?: string
   lastInteractionType?: string
   nextFollowUpDate?: string

@@ -18,6 +18,11 @@ export const MOCK_CONTACTS: Record<string, Contact[]> = {
       relationshipSummary: 'Long-standing relationship. Aligned on rural India narrative. Key media ally.',
       howWeKnow: 'Met at India Economic Forum 2019. Regular exchanges on policy and rural development.',
       bio: 'Chairman of Kasturi & Sons Ltd. and Publisher of The Hindu since 2013, having previously served as the paper\'s Editor-in-Chief (2003–2012) and Managing Director since 1977. A veteran investigative journalist best known for his reporting on the Bofors scandal, he also oversaw Frontline, The Hindu Business Line and Sportstar. Recipient of the Padma Bhushan for journalism (1990) and Sri Lanka\'s Sri Lanka Ratna award.',
+      education: [
+        'Loyola College, Chennai — B.A.',
+        'Presidency College, Chennai — M.A. History',
+        'Columbia University Graduate School of Journalism — M.S. Comparative Journalism',
+      ],
       lastInteractionDate: '2026-08-15T10:00:00Z',
       lastInteractionType: 'call',
       nextFollowUpDate: '2026-09-10T00:00:00Z',

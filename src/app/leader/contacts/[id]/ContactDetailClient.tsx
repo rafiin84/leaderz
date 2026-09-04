@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Lock, MapPin,
-  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour,
+  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour, GraduationCap,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
@@ -217,43 +217,35 @@ export default function ContactDetailClient() {
               )}
 
               {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="flex flex-wrap items-center gap-2 mt-3">
                   {contact.lastInteractionDate && (
-                    <div className="rounded-xl bg-white/10 backdrop-blur-sm p-3">
-                      <p className="flex items-center gap-1 text-[10px] font-medium text-white/60 uppercase tracking-wide">
-                        <Clock size={11} />
-                        Last activity
-                      </p>
-                      <p className="text-sm font-semibold text-white mt-1">{formatRelativeTime(contact.lastInteractionDate)}</p>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] text-white/70">
+                      <Clock size={11} />
+                      Last activity <span className="font-semibold text-white">{formatRelativeTime(contact.lastInteractionDate)}</span>
+                    </span>
                   )}
                   {contact.nextFollowUpDate && (
-                    <div className="rounded-xl bg-amber-400/15 border border-amber-400/20 p-3">
-                      <p className="flex items-center gap-1 text-[10px] font-medium text-amber-300 uppercase tracking-wide">
-                        <Lightning size={11} weight="fill" />
-                        Next follow-up
-                      </p>
-                      <p className="text-sm font-semibold text-white mt-1">{formatDate(contact.nextFollowUpDate)}</p>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 border border-amber-400/20 px-2.5 py-1 text-[11px] text-amber-300">
+                      <Lightning size={11} weight="fill" />
+                      Next follow-up <span className="font-semibold text-white">{formatDate(contact.nextFollowUpDate)}</span>
+                    </span>
                   )}
                 </div>
               )}
 
+              {contact.relationshipSummary && (
+                <p className="text-xs text-white/60 leading-relaxed mt-3 pt-3 border-t border-white/10">{contact.relationshipSummary}</p>
+              )}
+
               <button
                 onClick={() => setActionsOpen(true)}
-                className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-neutral-900 font-semibold text-sm py-3 shadow-lg hover:bg-white/90 active:scale-[0.99] transition-all"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white text-neutral-900 font-semibold text-xs px-4 py-2 shadow-md hover:bg-white/90 active:scale-[0.98] transition-all"
               >
-                <SquaresFour size={18} weight="fill" />
+                <SquaresFour size={14} weight="fill" />
                 Quick Actions
               </button>
             </div>
           </div>
-
-          {contact.relationshipSummary && (
-            <div className="px-5 py-4 text-left">
-              <p className="text-sm text-foreground leading-relaxed">{contact.relationshipSummary}</p>
-            </div>
-          )}
         </section>
 
         {/* Sub tabs */}
@@ -291,20 +283,24 @@ export default function ContactDetailClient() {
                   </div>
                 )}
 
+                {contact.education && contact.education.length > 0 && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Education</h3>
+                    <div className="space-y-2.5">
+                      {contact.education.map(e => (
+                        <div key={e} className="flex items-start gap-2">
+                          <GraduationCap size={14} className="text-muted-foreground shrink-0 mt-0.5" />
+                          <p className="text-sm text-foreground leading-snug">{e}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {contact.howWeKnow && (
                   <div className="rounded-2xl border bg-card p-4">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">How you know each other</h3>
                     <p className="text-sm text-foreground leading-relaxed">{contact.howWeKnow}</p>
-                  </div>
-                )}
-
-                {allNotes.length > 0 && (
-                  <div className="rounded-2xl border bg-card p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Latest note</h3>
-                      <button onClick={() => setTab('notes')} className="text-xs text-primary font-medium">View all</button>
-                    </div>
-                    <NoteCard note={allNotes[0]} />
                   </div>
                 )}
 
@@ -322,7 +318,7 @@ export default function ContactDetailClient() {
                   </div>
                 )}
 
-                {!contact.bio && !contact.howWeKnow && allNotes.length === 0 && allInteractions.length === 0 && (
+                {!contact.bio && !contact.education?.length && !contact.howWeKnow && allInteractions.length === 0 && (
                   <p className="text-xs text-muted-foreground px-1">Nothing logged yet — use the actions above to get started.</p>
                 )}
               </>
