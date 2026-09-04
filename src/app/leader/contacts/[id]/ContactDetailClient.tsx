@@ -205,9 +205,13 @@ export default function ContactDetailClient() {
                     )}
                   </div>
                   {contact.categories.length > 0 && (
-                    <p className="inline-block text-xs text-white/70 mt-2 px-2.5 py-1 rounded-lg border border-white/20">
-                      {contact.categories.map(cat => CONTACT_CATEGORY_LABELS[cat]).join(' - ')}
-                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {contact.categories.map(cat => (
+                        <span key={cat} className="text-xs text-white/70 px-2.5 py-1 rounded-lg border border-white/20">
+                          {CONTACT_CATEGORY_LABELS[cat]}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
