@@ -163,10 +163,10 @@ export default function ContactDetailClient() {
           {/* Hero — identity, status and the primary CTA all live on the
               color, so the top of the page reads as one deliberate banner
               instead of a thin strip over white. */}
-          <div className="relative px-5 py-5 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
+          <div className="relative px-5 py-5 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
             <div
-              className="absolute inset-0 opacity-[0.12]"
-              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
+              className="absolute inset-0 opacity-[0.15]"
+              style={{ backgroundImage: 'radial-gradient(circle, black 1px, transparent 1px)', backgroundSize: '18px 18px' }}
             />
             <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               {/* Left: identity */}
@@ -176,29 +176,29 @@ export default function ContactDetailClient() {
                   name={contact.name}
                   size="2xl"
                   verified={contact.isPersonallyVerified}
-                  className="ring-4 ring-white/15 shadow-lg shrink-0"
+                  className="ring-4 ring-black/10 shadow-lg shrink-0"
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-2xl font-bold text-white">{contact.name}</h2>
+                    <h2 className="text-2xl font-bold text-neutral-900">{contact.name}</h2>
                     {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
                   </div>
                   {(contact.title || contact.organization) && (
-                    <p className="text-sm text-white/70 mt-0.5">
+                    <p className="text-sm text-neutral-500 mt-0.5">
                       {contact.title}
                       {contact.title && contact.organization && ' · '}
-                      {contact.organization && <span className="font-medium text-white/90">{contact.organization}</span>}
+                      {contact.organization && <span className="font-medium text-neutral-700">{contact.organization}</span>}
                     </p>
                   )}
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                     {contact.isPersonallyVerified && (
-                      <span className="flex items-center gap-1 text-xs text-emerald-300 font-medium">
+                      <span className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
                         <CheckCircle size={13} weight="fill" />
                         Personally Verified
                       </span>
                     )}
                     {contact.location && (
-                      <span className="flex items-center gap-1 text-xs text-white/60">
+                      <span className="flex items-center gap-1 text-xs text-neutral-500">
                         <MapPin size={12} />
                         {contact.location}
                       </span>
@@ -209,7 +209,7 @@ export default function ContactDetailClient() {
                       {contact.categories.map(cat => (
                         <span
                           key={cat}
-                          className="text-xs text-white/70 px-2.5 py-1 rounded-lg border whitespace-nowrap"
+                          className="text-xs text-neutral-600 px-2.5 py-1 rounded-lg border whitespace-nowrap"
                           style={{ borderColor: '#076f50' }}
                         >
                           {CONTACT_CATEGORY_LABELS[cat]}
@@ -223,19 +223,19 @@ export default function ContactDetailClient() {
               {/* Right: stats, CTA */}
               <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
                 {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-white/70">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-neutral-500">
                     {contact.lastInteractionDate && (
-                      <span>Last activity: <span className="text-white font-medium">{formatRelativeTime(contact.lastInteractionDate)}</span></span>
+                      <span>Last activity: <span className="text-neutral-900 font-medium">{formatRelativeTime(contact.lastInteractionDate)}</span></span>
                     )}
                     {contact.nextFollowUpDate && (
-                      <span>Next follow up: <span className="text-white font-medium">{formatDate(contact.nextFollowUpDate)}</span></span>
+                      <span>Next follow up: <span className="text-neutral-900 font-medium">{formatDate(contact.nextFollowUpDate)}</span></span>
                     )}
                   </div>
                 )}
 
                 <button
                   onClick={() => setActionsOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-neutral-900 font-semibold text-xs px-4 py-2 shadow-md hover:bg-white/90 active:scale-[0.98] transition-all"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
                 >
                   <SquaresFour size={14} weight="fill" />
                   Quick Actions
