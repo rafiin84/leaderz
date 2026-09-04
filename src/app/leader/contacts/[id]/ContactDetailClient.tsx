@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Lock, MapPin,
-  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour, GraduationCap,
+  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour, GraduationCap, CaretDown,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
@@ -15,7 +15,7 @@ import { WhatsAppComposer } from '@/components/contacts/WhatsAppComposer'
 import { EmailComposer } from '@/components/contacts/EmailComposer'
 import { NotesComposer } from '@/components/contacts/NotesComposer'
 import { VideoCallPicker } from '@/components/contacts/VideoCallPicker'
-import { ContactActionsSheet, type ContactAction } from '@/components/contacts/ContactActionsSheet'
+import { ContactActionsDropdown, type ContactAction } from '@/components/contacts/ContactActionsDropdown'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatDate, formatShortDate, formatRelativeTime } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
@@ -46,7 +46,7 @@ export default function ContactDetailClient() {
   const [emailOpen, setEmailOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [videoOpen, setVideoOpen] = useState(false)
-  const [actionsOpen, setActionsOpen] = useState(false)
+  const [quickMenuOpen, setQuickMenuOpen] = useState(false)
 
   const [addedNotes, setAddedNotes] = useState<ContactNote[]>([])
   const [addedInteractions, setAddedInteractions] = useState<ContactInteraction[]>([])
@@ -107,14 +107,6 @@ export default function ContactDetailClient() {
   }
 
   const quickActions: ContactAction[] = [
-    ...(contact.phone ? [{
-      key: 'whatsapp', icon: WhatsappLogo, label: 'WhatsApp', sub: contact.phone,
-      color: 'text-[#128C4A] dark:text-[#25D366]', bg: 'bg-[#25D366]/15', onSelect: () => setWhatsAppOpen(true),
-    }] : []),
-    ...(contact.phone ? [{
-      key: 'call', icon: Phone, label: 'Call', sub: contact.phone,
-      color: 'text-emerald-600', bg: 'bg-emerald-500/15', onSelect: handleCall,
-    }] : []),
     ...(contact.email ? [{
       key: 'email', icon: EnvelopeSimple, label: 'Email', sub: contact.email,
       color: 'text-blue-600', bg: 'bg-blue-500/15', onSelect: () => setEmailOpen(true),
@@ -159,87 +151,107 @@ export default function ContactDetailClient() {
 
       <div className="px-4 py-5 space-y-5">
         {/* Snapshot */}
-        <section className="rounded-2xl border bg-card overflow-hidden">
-          {/* Hero — identity, status and the primary CTA all live on the
-              color, so the top of the page reads as one deliberate banner
-              instead of a thin strip over white. */}
-          <div className="relative px-5 py-5 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
-            <div
-              className="absolute inset-0 opacity-[0.15]"
-              style={{ backgroundImage: 'radial-gradient(circle, black 1px, transparent 1px)', backgroundSize: '18px 18px' }}
-            />
-            <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              {/* Left: identity */}
-              <div className="flex items-center gap-4 min-w-0">
-                <Avatar
-                  src={contact.avatarUrl}
-                  name={contact.name}
-                  size="2xl"
-                  verified={contact.isPersonallyVerified}
-                  className="ring-4 ring-black/10 shadow-lg shrink-0"
-                />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-2xl font-bold text-neutral-900">{contact.name}</h2>
-                    {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
-                  </div>
-                  {(contact.title || contact.organization) && (
-                    <p className="text-sm text-neutral-500 mt-0.5">
-                      {contact.title}
-                      {contact.title && contact.organization && ' · '}
-                      {contact.organization && <span className="font-medium text-neutral-700">{contact.organization}</span>}
-                    </p>
+        {/* Hero — identity, status and the primary CTA all live on the
+            color, so the top of the page reads as one deliberate banner
+            instead of a thin strip over white. No overflow-hidden here
+            (unlike the rest of the app's cards) since the Quick Actions
+            dropdown needs to spill outside the banner's edge. */}
+        <section className="relative rounded-2xl border px-5 py-5 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
+          <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            {/* Left: identity */}
+            <div className="flex items-center gap-4 min-w-0">
+              <Avatar
+                src={contact.avatarUrl}
+                name={contact.name}
+                size="2xl"
+                verified={contact.isPersonallyVerified}
+                className="ring-4 ring-black/10 shadow-lg shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-2xl font-bold text-neutral-900">{contact.name}</h2>
+                  {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
+                </div>
+                {(contact.title || contact.organization) && (
+                  <p className="text-sm text-neutral-500 mt-0.5">
+                    {contact.title}
+                    {contact.title && contact.organization && ' · '}
+                    {contact.organization && <span className="font-medium text-neutral-700">{contact.organization}</span>}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                  {contact.isPersonallyVerified && (
+                    <span className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
+                      <CheckCircle size={13} weight="fill" />
+                      Personally Verified
+                    </span>
                   )}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                    {contact.isPersonallyVerified && (
-                      <span className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
-                        <CheckCircle size={13} weight="fill" />
-                        Personally Verified
-                      </span>
-                    )}
-                    {contact.location && (
-                      <span className="flex items-center gap-1 text-xs text-neutral-500">
-                        <MapPin size={12} />
-                        {contact.location}
-                      </span>
-                    )}
-                  </div>
-                  {contact.categories.length > 0 && (
-                    <div className="flex items-center gap-1.5 mt-2">
-                      {contact.categories.map(cat => (
-                        <span
-                          key={cat}
-                          className="text-xs text-neutral-600 px-2.5 py-1 rounded-lg border whitespace-nowrap"
-                          style={{ borderColor: '#076f50' }}
-                        >
-                          {CONTACT_CATEGORY_LABELS[cat]}
-                        </span>
-                      ))}
-                    </div>
+                  {contact.location && (
+                    <span className="flex items-center gap-1 text-xs text-neutral-500">
+                      <MapPin size={12} />
+                      {contact.location}
+                    </span>
                   )}
                 </div>
-              </div>
-
-              {/* Right: stats, CTA */}
-              <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
-                {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-neutral-500">
-                    {contact.lastInteractionDate && (
-                      <span>Last activity: <span className="text-neutral-900 font-medium">{formatRelativeTime(contact.lastInteractionDate)}</span></span>
-                    )}
-                    {contact.nextFollowUpDate && (
-                      <span>Next follow up: <span className="text-neutral-900 font-medium">{formatDate(contact.nextFollowUpDate)}</span></span>
-                    )}
+                {contact.categories.length > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    {contact.categories.map(cat => (
+                      <span
+                        key={cat}
+                        className="text-xs text-neutral-600 px-2.5 py-1 rounded-lg border whitespace-nowrap"
+                        style={{ borderColor: '#076f50' }}
+                      >
+                        {CONTACT_CATEGORY_LABELS[cat]}
+                      </span>
+                    ))}
                   </div>
                 )}
+              </div>
+            </div>
 
-                <button
-                  onClick={() => setActionsOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
-                >
-                  <SquaresFour size={14} weight="fill" />
-                  Quick Actions
-                </button>
+            {/* Right: stats, CTA */}
+            <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
+              {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-neutral-500">
+                  {contact.lastInteractionDate && (
+                    <span>Last activity: <span className="text-neutral-900 font-medium">{formatRelativeTime(contact.lastInteractionDate)}</span></span>
+                  )}
+                  {contact.nextFollowUpDate && (
+                    <span>Next follow up: <span className="text-neutral-900 font-medium">{formatDate(contact.nextFollowUpDate)}</span></span>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {contact.phone && (
+                  <button
+                    onClick={handleCall}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white text-neutral-900 font-semibold text-xs px-3.5 py-2 hover:bg-neutral-50 active:scale-[0.98] transition-all"
+                  >
+                    <Phone size={14} weight="fill" />
+                    Call
+                  </button>
+                )}
+                {contact.phone && (
+                  <button
+                    onClick={() => setWhatsAppOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 text-[#128C4A] font-semibold text-xs px-3.5 py-2 hover:bg-[#25D366]/25 active:scale-[0.98] transition-all"
+                  >
+                    <WhatsappLogo size={14} weight="fill" />
+                    WhatsApp
+                  </button>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() => setQuickMenuOpen(v => !v)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
+                  >
+                    <SquaresFour size={14} weight="fill" />
+                    Quick Actions
+                    <CaretDown size={12} weight="bold" className={cn('transition-transform', quickMenuOpen && 'rotate-180')} />
+                  </button>
+                  <ContactActionsDropdown open={quickMenuOpen} onClose={() => setQuickMenuOpen(false)} actions={quickActions} />
+                </div>
               </div>
             </div>
           </div>
@@ -454,7 +466,6 @@ export default function ContactDetailClient() {
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} recipientName={contact.name} email={contact.email} />
       <NotesComposer open={notesOpen} onClose={() => setNotesOpen(false)} recipientName={contact.name} onSave={saveNote} />
       <VideoCallPicker open={videoOpen} onClose={() => setVideoOpen(false)} recipientName={contact.name} />
-      <ContactActionsSheet open={actionsOpen} onClose={() => setActionsOpen(false)} recipientName={contact.name} actions={quickActions} />
     </div>
   )
 }
