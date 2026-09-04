@@ -1,11 +1,13 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Phone, WhatsappLogo, Lightning, Cake, Lock, CaretRight } from '@phosphor-icons/react'
 import type { Contact } from '@/types/contact'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { Avatar } from '@/components/common/Avatar'
-import { telHref, whatsAppHref } from '@/lib/contactActions'
+import { telHref } from '@/lib/contactActions'
 import { cn } from '@/lib/utils'
+import { WhatsAppComposer } from '@/components/contacts/WhatsAppComposer'
 
 interface Props {
   contact: Contact
@@ -17,13 +19,15 @@ interface Props {
  * Call and WhatsApp are full labelled buttons rather than faint icons — they
  * are the two actions people actually come here for, and as bare icons they
  * did not read as clickable. The card body is a separate link so the buttons
- * are never nested inside it.
+ * are never nested inside it. WhatsApp opens the same composer (suggested
+ * messages + custom text) as the contact detail page instead of jumping
+ * straight to wa.me, so the flow is consistent everywhere it appears.
  */
 export function ContactListItem({ contact }: Props) {
   const hasCake = contact.importantDates.some(d => d.type === 'birthday')
   const hasFollowUp = Boolean(contact.nextFollowUpDate)
   const isPrivate = contact.privacyLevel === 'leader_only'
-  const wa = whatsAppHref(contact)
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
 
   return (
     <div className="group min-w-0 rounded-2xl border bg-muted/40 p-4 transition-colors hover:bg-muted/60 hover:border-foreground/20">
@@ -100,25 +104,29 @@ export function ContactListItem({ contact }: Props) {
             <Phone size={15} weight="fill" />
             Call
           </a>
-          {wa && (
-            <a
-              href={wa}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`WhatsApp ${contact.name}`}
-              className={cn(
-                'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
-                'text-[13px] font-semibold',
-                'bg-[#25D366]/12 text-[#128C4A] dark:text-[#25D366]',
-                'hover:bg-[#25D366]/20 transition-colors'
-              )}
-            >
-              <WhatsappLogo size={15} weight="fill" />
-              WhatsApp
-            </a>
-          )}
+          <button
+            type="button"
+            onClick={() => setWhatsAppOpen(true)}
+            aria-label={`WhatsApp ${contact.name}`}
+            className={cn(
+              'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
+              'text-[13px] font-semibold',
+              'bg-[#25D366]/12 text-[#128C4A] dark:text-[#25D366]',
+              'hover:bg-[#25D366]/20 transition-colors'
+            )}
+          >
+            <WhatsappLogo size={15} weight="fill" />
+            WhatsApp
+          </button>
         </div>
       )}
+
+      <WhatsAppComposer
+        open={whatsAppOpen}
+        onClose={() => setWhatsAppOpen(false)}
+        recipientName={contact.name}
+        phone={contact.phone}
+      />
     </div>
   )
 }
