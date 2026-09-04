@@ -131,67 +131,65 @@ export default function ContactDetailClient() {
       <div className="px-4 py-5 space-y-5">
         {/* Snapshot */}
         <section className="rounded-2xl border bg-card overflow-hidden">
-          {/* Cover */}
-          <div className="relative h-24 sm:h-28 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
+          {/* Hero — identity lives on the color, so the top of the page reads
+              as a deliberate banner instead of a thin strip over white. */}
+          <div className="relative px-5 pt-6 pb-5 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
             <div
               className="absolute inset-0 opacity-[0.12]"
               style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
             />
-            {contact.isFavorite && (
-              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center">
-                <Star size={15} className="text-amber-400" weight="fill" />
-              </span>
-            )}
-          </div>
-
-          <div className="px-5 pb-5 text-left">
-            <div className="-mt-10">
+            <div className="relative flex items-center gap-4">
               <Avatar
                 src={contact.avatarUrl}
                 name={contact.name}
                 size="2xl"
                 verified={contact.isPersonallyVerified}
-                className="ring-4 ring-card shadow-lg"
+                className="ring-4 ring-white/15 shadow-lg shrink-0"
               />
-            </div>
-
-            <div className="mt-3">
-              <h2 className="text-2xl font-bold text-foreground">{contact.name}</h2>
-              {(contact.title || contact.organization) && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {contact.title}
-                  {contact.title && contact.organization && ' · '}
-                  {contact.organization && <span className="font-medium text-foreground/80">{contact.organization}</span>}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                {contact.isPersonallyVerified && (
-                  <span className="flex items-center gap-1 text-xs text-primary font-medium">
-                    <CheckCircle size={13} weight="fill" />
-                    Personally Verified
-                  </span>
-                )}
-                {contact.location && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin size={12} />
-                    {contact.location}
-                  </span>
-                )}
-              </div>
-              {contact.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {contact.categories.map(cat => (
-                    <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                      {CONTACT_CATEGORY_LABELS[cat]}
-                    </span>
-                  ))}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-2xl font-bold text-white">{contact.name}</h2>
+                  {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
                 </div>
-              )}
+                {(contact.title || contact.organization) && (
+                  <p className="text-sm text-white/70 mt-0.5">
+                    {contact.title}
+                    {contact.title && contact.organization && ' · '}
+                    {contact.organization && <span className="font-medium text-white/90">{contact.organization}</span>}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                  {contact.isPersonallyVerified && (
+                    <span className="flex items-center gap-1 text-xs text-emerald-300 font-medium">
+                      <CheckCircle size={13} weight="fill" />
+                      Personally Verified
+                    </span>
+                  )}
+                  {contact.location && (
+                    <span className="flex items-center gap-1 text-xs text-white/60">
+                      <MapPin size={12} />
+                      {contact.location}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="px-5 pt-4 pb-5 text-left">
+            {contact.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {contact.categories.map(cat => (
+                  <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
+                    {CONTACT_CATEGORY_LABELS[cat]}
+                  </span>
+                ))}
+              </div>
+            )}
 
           {/* At-a-glance stats */}
           {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-            <div className="grid grid-cols-2 gap-2 mt-5">
+            <div className={cn('grid grid-cols-2 gap-2', contact.categories.length > 0 && 'mt-4')}>
               {contact.lastInteractionDate && (
                 <div className="rounded-xl bg-muted/60 p-3">
                   <p className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
@@ -285,20 +283,22 @@ export default function ContactDetailClient() {
 
         {/* Sub tabs */}
         <div>
-          <div className="flex gap-2 overflow-x-auto scrollbar-none border-b -mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? 'page' : undefined}
                 className={cn(
-                  'shrink-0 inline-flex items-center gap-1.5 text-xs px-3 py-2.5 font-medium border-b-2 transition-colors whitespace-nowrap',
-                  tab === t.id ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+                  'shrink-0 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border transition-colors whitespace-nowrap',
+                  tab === t.id
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-transparent text-foreground/60 border-border hover:bg-muted hover:text-foreground'
                 )}
               >
                 {t.label}
                 {counts[t.id] !== undefined && (
-                  <span className={cn('tabular-nums', tab === t.id ? 'text-foreground/50' : 'text-muted-foreground/50')}>
+                  <span className={cn('tabular-nums', tab === t.id ? 'text-background/70' : 'text-foreground/40')}>
                     {counts[t.id]}
                   </span>
                 )}
