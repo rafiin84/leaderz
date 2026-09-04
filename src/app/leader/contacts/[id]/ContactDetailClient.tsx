@@ -156,7 +156,7 @@ export default function ContactDetailClient() {
             instead of a thin strip over white. No overflow-hidden here
             (unlike the rest of the app's cards) since the Quick Actions
             dropdown needs to spill outside the banner's edge. */}
-        <section className="relative rounded-2xl border px-5 py-5 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
+        <section className="relative rounded-2xl border px-5 pt-5 pb-14 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
           <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             {/* Left: identity */}
             <div className="flex items-center gap-4 min-w-0">
@@ -209,7 +209,7 @@ export default function ContactDetailClient() {
               </div>
             </div>
 
-            {/* Right: stats, CTA */}
+            {/* Right: stats + Quick Actions, up top */}
             <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
               {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-neutral-500">
@@ -222,39 +222,39 @@ export default function ContactDetailClient() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
-                {contact.phone && (
-                  <button
-                    onClick={handleCall}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white text-neutral-900 font-semibold text-xs px-3.5 py-2 hover:bg-neutral-50 active:scale-[0.98] transition-all"
-                  >
-                    <Phone size={14} weight="fill" />
-                    Call
-                  </button>
-                )}
-                {contact.phone && (
-                  <button
-                    onClick={() => setWhatsAppOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 text-[#128C4A] font-semibold text-xs px-3.5 py-2 hover:bg-[#25D366]/25 active:scale-[0.98] transition-all"
-                  >
-                    <WhatsappLogo size={14} weight="fill" />
-                    WhatsApp
-                  </button>
-                )}
-                <div className="relative">
-                  <button
-                    onClick={() => setQuickMenuOpen(v => !v)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
-                  >
-                    <SquaresFour size={14} weight="fill" />
-                    Quick Actions
-                    <CaretDown size={12} weight="bold" className={cn('transition-transform', quickMenuOpen && 'rotate-180')} />
-                  </button>
-                  <ContactActionsDropdown open={quickMenuOpen} onClose={() => setQuickMenuOpen(false)} actions={quickActions} />
-                </div>
+              <div className="relative">
+                <button
+                  onClick={() => setQuickMenuOpen(v => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
+                >
+                  <SquaresFour size={14} weight="fill" />
+                  Quick Actions
+                  <CaretDown size={12} weight="bold" className={cn('transition-transform', quickMenuOpen && 'rotate-180')} />
+                </button>
+                <ContactActionsDropdown open={quickMenuOpen} onClose={() => setQuickMenuOpen(false)} actions={quickActions} />
               </div>
             </div>
           </div>
+
+          {/* Call / WhatsApp pinned to the banner's bottom-right corner */}
+          {contact.phone && (
+            <div className="absolute bottom-5 right-5 flex items-center gap-2">
+              <button
+                onClick={handleCall}
+                className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white text-neutral-900 font-semibold text-xs px-3.5 py-2 hover:bg-neutral-50 active:scale-[0.98] transition-all"
+              >
+                <Phone size={14} weight="fill" />
+                Call
+              </button>
+              <button
+                onClick={() => setWhatsAppOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 text-[#128C4A] font-semibold text-xs px-3.5 py-2 hover:bg-[#25D366]/25 active:scale-[0.98] transition-all"
+              >
+                <WhatsappLogo size={14} weight="fill" />
+                WhatsApp
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Sub tabs */}
