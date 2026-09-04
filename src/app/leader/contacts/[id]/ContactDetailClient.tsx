@@ -210,7 +210,7 @@ export default function ContactDetailClient() {
                         <span
                           key={cat}
                           className="text-xs text-white/70 px-2.5 py-1 rounded-lg border whitespace-nowrap"
-                          style={{ borderColor: '#1ca97f' }}
+                          style={{ borderColor: '#076f50' }}
                         >
                           {CONTACT_CATEGORY_LABELS[cat]}
                         </span>
