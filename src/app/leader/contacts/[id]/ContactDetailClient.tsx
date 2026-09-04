@@ -207,7 +207,11 @@ export default function ContactDetailClient() {
                   {contact.categories.length > 0 && (
                     <div className="flex items-center gap-1.5 mt-2">
                       {contact.categories.map(cat => (
-                        <span key={cat} className="text-xs text-white/70 px-2.5 py-1 rounded-lg border border-[#1ca97f] whitespace-nowrap">
+                        <span
+                          key={cat}
+                          className="text-xs text-white/70 px-2.5 py-1 rounded-lg border whitespace-nowrap"
+                          style={{ borderColor: '#1ca97f' }}
+                        >
                           {CONTACT_CATEGORY_LABELS[cat]}
                         </span>
                       ))}
