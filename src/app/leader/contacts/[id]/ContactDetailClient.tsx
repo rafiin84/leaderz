@@ -1,20 +1,36 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Users, Lock, MapPin, PaperPlaneTilt, Star, DotsThree, CheckCircle, WhatsappLogo } from '@phosphor-icons/react'
+import {
+  ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Lock, MapPin,
+  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText,
+} from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
 import { PrivacyBadge } from '@/components/common/PrivacyBadge'
 import { Skeleton } from '@/components/common/Skeleton'
 import { LogInteractionSheet } from '@/components/contacts/LogInteractionSheet'
-import { CommunicationComposer } from '@/components/contacts/CommunicationComposer'
+import { WhatsAppComposer } from '@/components/contacts/WhatsAppComposer'
+import { EmailComposer } from '@/components/contacts/EmailComposer'
+import { NotesComposer } from '@/components/contacts/NotesComposer'
+import { VideoCallPicker } from '@/components/contacts/VideoCallPicker'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
-import { formatDate, formatRelativeTime } from '@/lib/formatting'
+import { formatDate, formatShortDate, formatRelativeTime } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
-import { whatsAppHref } from '@/lib/contactActions'
-import type { ContactInteraction, ContactNote } from '@/types/contact'
+import { telHref } from '@/lib/contactActions'
+import type { ContactNote, ContactInteraction } from '@/types/contact'
+
+type TabId = 'overview' | 'relationship' | 'dates' | 'notes' | 'activities' | 'documents'
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'relationship', label: 'Relationship' },
+  { id: 'dates', label: 'Key Dates' },
+  { id: 'notes', label: 'Notes' },
+  { id: 'activities', label: 'Activities' },
+  { id: 'documents', label: 'Documents' },
+]
 
 export default function ContactDetailClient() {
   const params = useParams()
@@ -22,69 +38,55 @@ export default function ContactDetailClient() {
   const { activeTenantId, userRole } = useAppStore()
   const contactId = params.id as string
   const { data: contact, isLoading } = useContact(activeTenantId, contactId, userRole)
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetType, setSheetType] = useState<ContactInteraction['type']>('note')
-  const [composerOpen, setComposerOpen] = useState(false)
-  const [composerContext, setComposerContext] = useState<'birthday' | 'followup' | 'thankyou' | 'custom'>('custom')
+
+  const [tab, setTab] = useState<TabId>('overview')
+  const [followUpOpen, setFollowUpOpen] = useState(false)
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false)
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [videoOpen, setVideoOpen] = useState(false)
 
   const [addedNotes, setAddedNotes] = useState<ContactNote[]>([])
-  const [noteComposerOpen, setNoteComposerOpen] = useState(false)
-  const [noteText, setNoteText] = useState('')
-  const notesSectionRef = useRef<HTMLDivElement>(null)
-  const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [addedInteractions, setAddedInteractions] = useState<ContactInteraction[]>([])
 
-  function openLog(type: ContactInteraction['type']) {
-    setSheetType(type)
-    setSheetOpen(true)
+  function handleCall() {
+    if (!contact?.phone) return
+    window.location.href = telHref(contact.phone)
   }
 
-  function openNoteComposer() {
-    setNoteComposerOpen(true)
-    requestAnimationFrame(() => {
-      notesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      noteTextareaRef.current?.focus()
-    })
-  }
-
-  function cancelNoteComposer() {
-    setNoteComposerOpen(false)
-    setNoteText('')
-  }
-
-  function saveNote() {
-    if (!noteText.trim() || !contact) return
-    const newNote: ContactNote = {
-      id: `note-${Date.now()}`,
-      content: noteText.trim(),
-      privacyLevel: contact.privacyLevel,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    setAddedNotes(prev => [newNote, ...prev])
-    setNoteText('')
-    setNoteComposerOpen(false)
+  function saveNote(content: string) {
+    if (!contact) return
+    const now = new Date().toISOString()
+    setAddedNotes(prev => [
+      { id: `note-${Date.now()}`, content, privacyLevel: contact.privacyLevel, createdAt: now, updatedAt: now },
+      ...prev,
+    ])
+    setAddedInteractions(prev => [
+      { id: `int-${Date.now()}`, type: 'note', summary: content, date: now, sentiment: 'neutral' },
+      ...prev,
+    ])
   }
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <div className="w-full max-w-3xl px-4 py-6 space-y-4">
         <Skeleton className="h-8 w-8 rounded-full" />
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-16 h-16 rounded-full" />
+        <div className="flex items-start gap-4">
+          <Skeleton className="w-20 h-20 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-4 w-32" />
           </div>
         </div>
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
       </div>
     )
   }
 
   if (!contact) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+      <div className="w-full max-w-3xl px-4 py-16 text-center">
         <Lock size={48} className="mx-auto text-muted-foreground mb-4" />
         <h2 className="text-lg font-semibold mb-2">Contact not accessible</h2>
         <p className="text-sm text-muted-foreground mb-4">This contact is restricted to a higher access level.</p>
@@ -94,11 +96,16 @@ export default function ContactDetailClient() {
   }
 
   const isLeaderOnly = contact.privacyLevel === 'leader_only'
-  /** Undefined when the contact has no phone, which hides the action. */
-  const waHref = whatsAppHref(contact)
+  const allNotes = [...addedNotes, ...contact.notes]
+  const allInteractions = [...addedInteractions, ...contact.interactions]
+
+  const counts: Partial<Record<TabId, number>> = {
+    notes: allNotes.length,
+    activities: allInteractions.length,
+  }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full max-w-3xl">
       {/* Back header */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -121,225 +128,391 @@ export default function ContactDetailClient() {
         </div>
       )}
 
-      <div className="px-4 py-4 space-y-4">
-        {/* Profile */}
-        <div className="flex items-start gap-4">
-          <Avatar src={contact.avatarUrl} name={contact.name} size="xl" verified={contact.isPersonallyVerified} />
-          <div className="flex-1 min-w-0 pt-1">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">{contact.name}</h2>
-                {contact.title && <p className="text-sm text-muted-foreground">{contact.title}</p>}
-                {contact.organization && <p className="text-sm font-medium text-foreground/80">{contact.organization}</p>}
+      <div className="px-4 py-5 space-y-5">
+        {/* Snapshot */}
+        <section className="rounded-2xl border bg-card p-5">
+          <div className="flex items-start gap-4 text-left">
+            <Avatar src={contact.avatarUrl} name={contact.name} size="2xl" verified={contact.isPersonallyVerified} />
+            <div className="flex-1 min-w-0 pt-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-2xl font-bold text-foreground">{contact.name}</h2>
+                {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
               </div>
+              {(contact.title || contact.organization) && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {contact.title}
+                  {contact.title && contact.organization && ' · '}
+                  {contact.organization && <span className="font-medium text-foreground/80">{contact.organization}</span>}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                {contact.isPersonallyVerified && (
+                  <span className="flex items-center gap-1 text-xs text-primary font-medium">
+                    <CheckCircle size={13} weight="fill" />
+                    Personally Verified
+                  </span>
+                )}
+                {contact.location && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin size={12} />
+                    {contact.location}
+                  </span>
+                )}
+              </div>
+              {contact.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {contact.categories.map(cat => (
+                    <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
+                      {CONTACT_CATEGORY_LABELS[cat]}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            {contact.isPersonallyVerified && (
-              <div className="flex items-center gap-1 mt-1">
-                <CheckCircle size={13} className="text-primary" weight="fill" />
-                <p className="text-xs text-primary font-medium">Personally Verified</p>
-              </div>
-            )}
-            {contact.location && (
-              <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <MapPin size={12} />
-                {contact.location}
-              </p>
-            )}
           </div>
-        </div>
 
-        {/* Categories */}
-        {contact.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {contact.categories.map(cat => (
-              <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                {CONTACT_CATEGORY_LABELS[cat]}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Quick actions */}
-        <div className={cn('grid gap-2', waHref ? 'grid-cols-5' : 'grid-cols-4')}>
-          {waHref && (
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`WhatsApp ${contact.name}`}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-[#25D366]/12 hover:bg-[#25D366]/20 transition-colors"
-            >
-              <WhatsappLogo size={20} weight="fill" className="text-[#128C4A] dark:text-[#25D366]" />
-              <span className="text-[10px] font-medium text-muted-foreground">WhatsApp</span>
-            </a>
-          )}
-          {[
-            { icon: Phone, label: 'Call', color: 'text-emerald-600', action: () => openLog('call') },
-            { icon: PaperPlaneTilt, label: 'Message', color: 'text-blue-600', action: () => (setComposerContext('custom'), setComposerOpen(true)) },
-            { icon: Note, label: 'Note', color: 'text-amber-600', action: openNoteComposer },
-            { icon: Lightning, label: 'Follow up', color: 'text-orange-600', action: () => openLog('meeting') },
-          ].map(({ icon: Icon, label, color, action }) => (
-            <button
-              key={label}
-              onClick={action}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted hover:bg-muted/80 transition-colors"
-              aria-label={label}
-            >
-              <Icon size={20} className={color} />
-              <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Relationship summary */}
-        {contact.relationshipSummary && (
-          <div className="rounded-2xl border bg-card p-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Relationship</h3>
-            <p className="text-sm text-foreground leading-relaxed">{contact.relationshipSummary}</p>
-            {contact.howWeKnow && (
-              <p className="text-xs text-muted-foreground mt-2">{contact.howWeKnow}</p>
-            )}
-          </div>
-        )}
-
-        {/* Key dates */}
-        {(contact.lastInteractionDate || contact.nextFollowUpDate || contact.importantDates.length > 0) && (
-          <div className="rounded-2xl border bg-card p-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Key dates</h3>
-            <div className="space-y-3">
+          {/* At-a-glance stats */}
+          {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
+            <div className="grid grid-cols-2 gap-2 mt-5">
               {contact.lastInteractionDate && (
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-muted-foreground shrink-0" />
-                  <span className="text-xs text-muted-foreground">Last interaction</span>
-                  <span className="text-xs font-medium ml-auto">{formatRelativeTime(contact.lastInteractionDate)}</span>
+                <div className="rounded-xl bg-muted/60 p-3">
+                  <p className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    <Clock size={11} />
+                    Last activity
+                  </p>
+                  <p className="text-sm font-semibold text-foreground mt-1">{formatRelativeTime(contact.lastInteractionDate)}</p>
                 </div>
               )}
               {contact.nextFollowUpDate && (
-                <div className="flex items-start gap-2">
-                  <Lightning size={14} className="text-amber-500 shrink-0 mt-0.5" weight="fill" />
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Follow up</p>
-                    {contact.nextFollowUpNote && <p className="text-xs text-foreground mt-0.5">{contact.nextFollowUpNote}</p>}
-                  </div>
-                  <span className="text-xs font-medium text-amber-600">{formatDate(contact.nextFollowUpDate)}</span>
+                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 p-3">
+                  <p className="flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                    <Lightning size={11} weight="fill" />
+                    Next follow-up
+                  </p>
+                  <p className="text-sm font-semibold text-foreground mt-1">{formatDate(contact.nextFollowUpDate)}</p>
                 </div>
               )}
-              {contact.importantDates.map(d => (
-                <div key={d.id} className="flex items-center gap-2">
-                  <Cake size={14} className="text-rose-400 shrink-0" weight="fill" />
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                  <span className="text-xs font-medium ml-auto">{formatShortDate(d.date)}</span>
-                </div>
-              ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Notes */}
-        <div ref={notesSectionRef} className="rounded-2xl border bg-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</h3>
-            {!noteComposerOpen && (
-              <button onClick={openNoteComposer} className="text-xs text-primary font-medium">+ Add note</button>
+          {contact.relationshipSummary && (
+            <p className="text-sm text-foreground leading-relaxed mt-4 pt-4 border-t">{contact.relationshipSummary}</p>
+          )}
+        </section>
+
+        {/* Primary actions */}
+        <section>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {contact.phone && (
+              <ActionCard
+                icon={WhatsappLogo}
+                label="WhatsApp"
+                sub={contact.phone}
+                color="text-[#128C4A] dark:text-[#25D366]"
+                bg="bg-[#25D366]/12 hover:bg-[#25D366]/20"
+                onClick={() => setWhatsAppOpen(true)}
+              />
+            )}
+            {contact.phone && (
+              <ActionCard
+                icon={Phone}
+                label="Call"
+                sub={contact.phone}
+                color="text-emerald-600"
+                bg="bg-emerald-500/10 hover:bg-emerald-500/15"
+                onClick={handleCall}
+              />
+            )}
+            {contact.email && (
+              <ActionCard
+                icon={EnvelopeSimple}
+                label="Email"
+                sub={contact.email}
+                color="text-blue-600"
+                bg="bg-blue-500/10 hover:bg-blue-500/15"
+                onClick={() => setEmailOpen(true)}
+              />
+            )}
+            <ActionCard
+              icon={VideoCamera}
+              label="Video Call"
+              sub="Meet or Zoom"
+              color="text-violet-600"
+              bg="bg-violet-500/10 hover:bg-violet-500/15"
+              onClick={() => setVideoOpen(true)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 mt-2.5">
+            <ActionCard
+              icon={Note}
+              label="Notes"
+              sub={`${allNotes.length} saved`}
+              color="text-amber-600"
+              bg="bg-muted hover:bg-muted/80"
+              compact
+              onClick={() => setNotesOpen(true)}
+            />
+            <ActionCard
+              icon={Lightning}
+              label="Follow-up"
+              sub={contact.nextFollowUpDate ? formatShortDate(contact.nextFollowUpDate) : 'Set a reminder'}
+              color="text-orange-600"
+              bg="bg-muted hover:bg-muted/80"
+              compact
+              onClick={() => setFollowUpOpen(true)}
+            />
+          </div>
+        </section>
+
+        {/* Sub tabs */}
+        <div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none border-b -mx-4 px-4">
+            {TABS.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                aria-current={tab === t.id ? 'page' : undefined}
+                className={cn(
+                  'shrink-0 inline-flex items-center gap-1.5 text-xs px-3 py-2.5 font-medium border-b-2 transition-colors whitespace-nowrap',
+                  tab === t.id ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t.label}
+                {counts[t.id] !== undefined && (
+                  <span className={cn('tabular-nums', tab === t.id ? 'text-foreground/50' : 'text-muted-foreground/50')}>
+                    {counts[t.id]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-4 space-y-4">
+            {tab === 'overview' && (
+              <>
+                {contact.howWeKnow && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">How you know each other</h3>
+                    <p className="text-sm text-foreground leading-relaxed">{contact.howWeKnow}</p>
+                  </div>
+                )}
+
+                {allNotes.length > 0 && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Latest note</h3>
+                      <button onClick={() => setTab('notes')} className="text-xs text-primary font-medium">View all</button>
+                    </div>
+                    <NoteCard note={allNotes[0]} />
+                  </div>
+                )}
+
+                {allInteractions.length > 0 && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recent activity</h3>
+                      <button onClick={() => setTab('activities')} className="text-xs text-primary font-medium">View all</button>
+                    </div>
+                    <div className="space-y-3">
+                      {allInteractions.slice(0, 2).map(interaction => (
+                        <InteractionRow key={interaction.id} interaction={interaction} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!contact.howWeKnow && allNotes.length === 0 && allInteractions.length === 0 && (
+                  <p className="text-xs text-muted-foreground px-1">Nothing logged yet — use the actions above to get started.</p>
+                )}
+              </>
+            )}
+
+            {tab === 'relationship' && (
+              <>
+                {(contact.relationshipSummary || contact.howWeKnow) && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Relationship</h3>
+                    {contact.relationshipSummary && <p className="text-sm text-foreground leading-relaxed">{contact.relationshipSummary}</p>}
+                    {contact.howWeKnow && <p className="text-xs text-muted-foreground mt-2">{contact.howWeKnow}</p>}
+                  </div>
+                )}
+                {contact.missionInvolvement && contact.missionInvolvement.length > 0 && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Mission involvement</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {contact.missionInvolvement.map(m => (
+                        <span key={m} className="text-xs px-2.5 py-1 rounded-full bg-accent text-accent-foreground font-medium">{m}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {contact.tags.length > 0 && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Tags</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {contact.tags.map(t => (
+                        <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">#{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!contact.relationshipSummary && !contact.howWeKnow && !contact.tags.length && (
+                  <p className="text-xs text-muted-foreground px-1">No relationship details yet.</p>
+                )}
+              </>
+            )}
+
+            {tab === 'dates' && (
+              <div className="rounded-2xl border bg-card p-4 space-y-3">
+                {contact.lastInteractionDate && (
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground">Last interaction</span>
+                    <span className="text-xs font-medium ml-auto">{formatRelativeTime(contact.lastInteractionDate)}</span>
+                  </div>
+                )}
+                {contact.nextFollowUpDate && (
+                  <div className="flex items-start gap-2">
+                    <Lightning size={14} className="text-amber-500 shrink-0 mt-0.5" weight="fill" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Follow up</p>
+                      {contact.nextFollowUpNote && <p className="text-xs text-foreground mt-0.5">{contact.nextFollowUpNote}</p>}
+                    </div>
+                    <span className="text-xs font-medium text-amber-600">{formatDate(contact.nextFollowUpDate)}</span>
+                  </div>
+                )}
+                {contact.importantDates.map(d => (
+                  <div key={d.id} className="flex items-center gap-2">
+                    <Cake size={14} className="text-rose-400 shrink-0" weight="fill" />
+                    <span className="text-xs text-muted-foreground">{d.label}</span>
+                    <span className="text-xs font-medium ml-auto">{formatShortDate(d.date)}</span>
+                  </div>
+                ))}
+                {!contact.lastInteractionDate && !contact.nextFollowUpDate && contact.importantDates.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No key dates yet.</p>
+                )}
+              </div>
+            )}
+
+            {tab === 'notes' && (
+              <div className="rounded-2xl border bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</h3>
+                  <button onClick={() => setNotesOpen(true)} className="text-xs text-primary font-medium">+ Add note</button>
+                </div>
+                {allNotes.length > 0 ? (
+                  <div className="space-y-3">
+                    {allNotes.map(note => <NoteCard key={note.id} note={note} />)}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No notes yet.</p>
+                )}
+              </div>
+            )}
+
+            {tab === 'activities' && (
+              <div className="rounded-2xl border bg-card p-4">
+                {allInteractions.length > 0 ? (
+                  <div className="space-y-3">
+                    {allInteractions.map((interaction, i) => (
+                      <div key={interaction.id} className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', interaction.sentiment === 'positive' ? 'bg-emerald-500' : interaction.sentiment === 'negative' ? 'bg-red-400' : 'bg-muted-foreground')} />
+                          {i < allInteractions.length - 1 && <div className="w-0.5 flex-1 bg-border mt-1" />}
+                        </div>
+                        <div className="flex-1 pb-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-xs font-medium text-foreground capitalize">{interaction.type}</p>
+                            <p className="text-[10px] text-muted-foreground shrink-0">{formatRelativeTime(interaction.date)}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{interaction.summary}</p>
+                          {interaction.followUpRequired && interaction.followUpNote && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                              <Lightning size={11} />
+                              {interaction.followUpNote}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No activity yet.</p>
+                )}
+              </div>
+            )}
+
+            {tab === 'documents' && (
+              <div className="rounded-2xl border bg-card p-8 flex flex-col items-center text-center gap-2">
+                <FileText size={28} className="text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">No documents yet</p>
+                <p className="text-xs text-muted-foreground max-w-[220px]">
+                  Files and attachments shared with {contact.name.split(' ')[0]} will appear here.
+                </p>
+              </div>
             )}
           </div>
-
-          {noteComposerOpen && (
-            <div className="mb-3 space-y-2">
-              <textarea
-                ref={noteTextareaRef}
-                value={noteText}
-                onChange={e => setNoteText(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Escape') cancelNoteComposer()
-                }}
-                placeholder={`Add a note about ${contact.name.split(' ')[0]}…`}
-                rows={3}
-                className="w-full rounded-xl bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <div className="flex items-center justify-end gap-2">
-                <button onClick={cancelNoteComposer} className="text-xs font-medium text-muted-foreground px-3 py-1.5 rounded-lg hover:bg-muted transition-colors">
-                  Cancel
-                </button>
-                <button
-                  onClick={saveNote}
-                  disabled={!noteText.trim()}
-                  className="text-xs font-medium text-primary-foreground bg-primary px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-opacity"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          )}
-
-          {[...addedNotes, ...contact.notes].length > 0 ? (
-            <div className="space-y-3">
-              {[...addedNotes, ...contact.notes].map(note => (
-                <div key={note.id} className={cn('rounded-xl p-3 text-sm text-foreground leading-relaxed border', note.privacyLevel === 'leader_only' ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' : 'bg-muted border-transparent')}>
-                  {note.privacyLevel === 'leader_only' && (
-                    <div className="flex items-center gap-1 mb-1.5">
-                      <Lock size={11} className="text-red-500" weight="fill" />
-                      <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">Leader Only</span>
-                    </div>
-                  )}
-                  {note.content}
-                  <p className="text-[10px] text-muted-foreground mt-2">{formatRelativeTime(note.updatedAt)}</p>
-                </div>
-              ))}
-            </div>
-          ) : !noteComposerOpen && (
-            <p className="text-xs text-muted-foreground">No notes yet.</p>
-          )}
         </div>
-
-        {/* Interaction timeline */}
-        {contact.interactions.length > 0 && (
-          <div className="rounded-2xl border bg-card p-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">History</h3>
-            <div className="space-y-3">
-              {contact.interactions.map((interaction, i) => (
-                <div key={interaction.id} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', interaction.sentiment === 'positive' ? 'bg-emerald-500' : interaction.sentiment === 'negative' ? 'bg-red-400' : 'bg-muted-foreground')} />
-                    {i < contact.interactions.length - 1 && <div className="w-0.5 flex-1 bg-border mt-1" />}
-                  </div>
-                  <div className="flex-1 pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-medium text-foreground capitalize">{interaction.type}</p>
-                      <p className="text-[10px] text-muted-foreground shrink-0">{formatRelativeTime(interaction.date)}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{interaction.summary}</p>
-                    {interaction.followUpRequired && interaction.followUpNote && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                        <Lightning size={11} />
-                        {interaction.followUpNote}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      <LogInteractionSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        contactName={contact.name}
-        defaultType={sheetType}
-      />
-      <CommunicationComposer
-        open={composerOpen}
-        onClose={() => setComposerOpen(false)}
-        recipientName={contact.name}
-        context={composerContext}
-      />
+      <LogInteractionSheet open={followUpOpen} onClose={() => setFollowUpOpen(false)} contactName={contact.name} defaultType="meeting" />
+      <WhatsAppComposer open={whatsAppOpen} onClose={() => setWhatsAppOpen(false)} recipientName={contact.name} phone={contact.phone} />
+      <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} recipientName={contact.name} email={contact.email} />
+      <NotesComposer open={notesOpen} onClose={() => setNotesOpen(false)} recipientName={contact.name} onSave={saveNote} />
+      <VideoCallPicker open={videoOpen} onClose={() => setVideoOpen(false)} recipientName={contact.name} />
     </div>
   )
 }
 
-function formatShortDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+function ActionCard({ icon: Icon, label, sub, color, bg, onClick, compact }: {
+  icon: React.ElementType
+  label: string
+  sub?: string
+  color: string
+  bg: string
+  onClick: () => void
+  compact?: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn('rounded-2xl transition-colors text-left flex gap-3', bg, compact ? 'flex-row items-center p-3' : 'flex-col p-4')}
+    >
+      <Icon size={compact ? 20 : 26} className={cn(color, 'shrink-0')} weight="fill" />
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-foreground">{label}</span>
+        {sub && <span className="block text-[11px] text-muted-foreground truncate">{sub}</span>}
+      </span>
+    </button>
+  )
+}
+
+function NoteCard({ note }: { note: ContactNote }) {
+  return (
+    <div className={cn('rounded-xl p-3 text-sm text-foreground leading-relaxed border', note.privacyLevel === 'leader_only' ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' : 'bg-muted border-transparent')}>
+      {note.privacyLevel === 'leader_only' && (
+        <div className="flex items-center gap-1 mb-1.5">
+          <Lock size={11} className="text-red-500" weight="fill" />
+          <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">Leader Only</span>
+        </div>
+      )}
+      {note.content}
+      <p className="text-[10px] text-muted-foreground mt-2">{formatRelativeTime(note.updatedAt)}</p>
+    </div>
+  )
+}
+
+function InteractionRow({ interaction }: { interaction: ContactInteraction }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0', interaction.sentiment === 'positive' ? 'bg-emerald-500' : interaction.sentiment === 'negative' ? 'bg-red-400' : 'bg-muted-foreground')} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs font-medium text-foreground capitalize">{interaction.type}</p>
+          <p className="text-[10px] text-muted-foreground shrink-0">{formatRelativeTime(interaction.date)}</p>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{interaction.summary}</p>
+      </div>
+    </div>
+  )
 }
