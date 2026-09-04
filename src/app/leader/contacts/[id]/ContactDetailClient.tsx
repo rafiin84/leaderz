@@ -204,34 +204,23 @@ export default function ContactDetailClient() {
                       </span>
                     )}
                   </div>
+                  {contact.categories.length > 0 && (
+                    <p className="text-xs text-white/60 mt-1.5">
+                      {contact.categories.map(cat => CONTACT_CATEGORY_LABELS[cat]).join(' - ')}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Right: badges, stats, CTA */}
-              <div className="flex flex-col sm:items-end gap-2 sm:shrink-0 sm:w-56">
-                {contact.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
-                    {contact.categories.map(cat => (
-                      <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-white/10 text-white/80 font-medium border border-white/10">
-                        {CONTACT_CATEGORY_LABELS[cat]}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
+              {/* Right: stats, CTA */}
+              <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
                 {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-white/70">
                     {contact.lastInteractionDate && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] text-white/70">
-                        <Clock size={11} />
-                        <span className="font-semibold text-white">{formatRelativeTime(contact.lastInteractionDate)}</span>
-                      </span>
+                      <span>Last activity: <span className="text-white font-medium">{formatRelativeTime(contact.lastInteractionDate)}</span></span>
                     )}
                     {contact.nextFollowUpDate && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 border border-amber-400/20 px-2.5 py-1 text-[11px] text-amber-300">
-                        <Lightning size={11} weight="fill" />
-                        <span className="font-semibold text-white">{formatDate(contact.nextFollowUpDate)}</span>
-                      </span>
+                      <span>Next follow up: <span className="text-white font-medium">{formatDate(contact.nextFollowUpDate)}</span></span>
                     )}
                   </div>
                 )}
@@ -245,10 +234,6 @@ export default function ContactDetailClient() {
                 </button>
               </div>
             </div>
-
-            {contact.relationshipSummary && (
-              <p className="relative text-xs text-white/60 leading-relaxed mt-3 pt-3 border-t border-white/10">{contact.relationshipSummary}</p>
-            )}
           </div>
         </section>
 
