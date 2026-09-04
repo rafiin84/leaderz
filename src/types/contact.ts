@@ -46,6 +46,7 @@ export interface Contact extends Timestamps {
   isPersonallyVerified: boolean
   relationshipSummary?: string
   howWeKnow?: string
+  bio?: string
   lastInteractionDate?: string
   lastInteractionType?: string
   nextFollowUpDate?: string

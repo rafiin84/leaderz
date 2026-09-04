@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Lock, MapPin,
-  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText,
+  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
@@ -15,6 +15,7 @@ import { WhatsAppComposer } from '@/components/contacts/WhatsAppComposer'
 import { EmailComposer } from '@/components/contacts/EmailComposer'
 import { NotesComposer } from '@/components/contacts/NotesComposer'
 import { VideoCallPicker } from '@/components/contacts/VideoCallPicker'
+import { ContactActionsSheet, type ContactAction } from '@/components/contacts/ContactActionsSheet'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatDate, formatShortDate, formatRelativeTime } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,7 @@ export default function ContactDetailClient() {
   const [emailOpen, setEmailOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [videoOpen, setVideoOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   const [addedNotes, setAddedNotes] = useState<ContactNote[]>([])
   const [addedInteractions, setAddedInteractions] = useState<ContactInteraction[]>([])
@@ -104,6 +106,33 @@ export default function ContactDetailClient() {
     activities: allInteractions.length,
   }
 
+  const quickActions: ContactAction[] = [
+    ...(contact.phone ? [{
+      key: 'whatsapp', icon: WhatsappLogo, label: 'WhatsApp', sub: contact.phone,
+      color: 'text-[#128C4A] dark:text-[#25D366]', bg: 'bg-[#25D366]/15', onSelect: () => setWhatsAppOpen(true),
+    }] : []),
+    ...(contact.phone ? [{
+      key: 'call', icon: Phone, label: 'Call', sub: contact.phone,
+      color: 'text-emerald-600', bg: 'bg-emerald-500/15', onSelect: handleCall,
+    }] : []),
+    ...(contact.email ? [{
+      key: 'email', icon: EnvelopeSimple, label: 'Email', sub: contact.email,
+      color: 'text-blue-600', bg: 'bg-blue-500/15', onSelect: () => setEmailOpen(true),
+    }] : []),
+    {
+      key: 'video', icon: VideoCamera, label: 'Video Call', sub: 'Meet or Zoom',
+      color: 'text-violet-600', bg: 'bg-violet-500/15', onSelect: () => setVideoOpen(true),
+    },
+    {
+      key: 'notes', icon: Note, label: 'Notes', sub: `${allNotes.length} saved`,
+      color: 'text-amber-600', bg: 'bg-amber-500/15', onSelect: () => setNotesOpen(true),
+    },
+    {
+      key: 'followup', icon: Lightning, label: 'Follow-up', sub: contact.nextFollowUpDate ? formatShortDate(contact.nextFollowUpDate) : 'Set a reminder',
+      color: 'text-orange-600', bg: 'bg-orange-500/15', onSelect: () => setFollowUpOpen(true),
+    },
+  ]
+
   return (
     <div className="w-full max-w-3xl">
       {/* Back header */}
@@ -131,154 +160,100 @@ export default function ContactDetailClient() {
       <div className="px-4 py-5 space-y-5">
         {/* Snapshot */}
         <section className="rounded-2xl border bg-card overflow-hidden">
-          {/* Hero — identity lives on the color, so the top of the page reads
-              as a deliberate banner instead of a thin strip over white. */}
+          {/* Hero — identity, status and the primary CTA all live on the
+              color, so the top of the page reads as one deliberate banner
+              instead of a thin strip over white. */}
           <div className="relative px-5 pt-6 pb-5 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
             <div
               className="absolute inset-0 opacity-[0.12]"
               style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
             />
-            <div className="relative flex items-center gap-4">
-              <Avatar
-                src={contact.avatarUrl}
-                name={contact.name}
-                size="2xl"
-                verified={contact.isPersonallyVerified}
-                className="ring-4 ring-white/15 shadow-lg shrink-0"
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-2xl font-bold text-white">{contact.name}</h2>
-                  {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
-                </div>
-                {(contact.title || contact.organization) && (
-                  <p className="text-sm text-white/70 mt-0.5">
-                    {contact.title}
-                    {contact.title && contact.organization && ' · '}
-                    {contact.organization && <span className="font-medium text-white/90">{contact.organization}</span>}
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                  {contact.isPersonallyVerified && (
-                    <span className="flex items-center gap-1 text-xs text-emerald-300 font-medium">
-                      <CheckCircle size={13} weight="fill" />
-                      Personally Verified
-                    </span>
+            <div className="relative">
+              <div className="flex items-center gap-4">
+                <Avatar
+                  src={contact.avatarUrl}
+                  name={contact.name}
+                  size="2xl"
+                  verified={contact.isPersonallyVerified}
+                  className="ring-4 ring-white/15 shadow-lg shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-2xl font-bold text-white">{contact.name}</h2>
+                    {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
+                  </div>
+                  {(contact.title || contact.organization) && (
+                    <p className="text-sm text-white/70 mt-0.5">
+                      {contact.title}
+                      {contact.title && contact.organization && ' · '}
+                      {contact.organization && <span className="font-medium text-white/90">{contact.organization}</span>}
+                    </p>
                   )}
-                  {contact.location && (
-                    <span className="flex items-center gap-1 text-xs text-white/60">
-                      <MapPin size={12} />
-                      {contact.location}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                    {contact.isPersonallyVerified && (
+                      <span className="flex items-center gap-1 text-xs text-emerald-300 font-medium">
+                        <CheckCircle size={13} weight="fill" />
+                        Personally Verified
+                      </span>
+                    )}
+                    {contact.location && (
+                      <span className="flex items-center gap-1 text-xs text-white/60">
+                        <MapPin size={12} />
+                        {contact.location}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {contact.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {contact.categories.map(cat => (
+                    <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-white/10 text-white/80 font-medium border border-white/10">
+                      {CONTACT_CATEGORY_LABELS[cat]}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  {contact.lastInteractionDate && (
+                    <div className="rounded-xl bg-white/10 backdrop-blur-sm p-3">
+                      <p className="flex items-center gap-1 text-[10px] font-medium text-white/60 uppercase tracking-wide">
+                        <Clock size={11} />
+                        Last activity
+                      </p>
+                      <p className="text-sm font-semibold text-white mt-1">{formatRelativeTime(contact.lastInteractionDate)}</p>
+                    </div>
+                  )}
+                  {contact.nextFollowUpDate && (
+                    <div className="rounded-xl bg-amber-400/15 border border-amber-400/20 p-3">
+                      <p className="flex items-center gap-1 text-[10px] font-medium text-amber-300 uppercase tracking-wide">
+                        <Lightning size={11} weight="fill" />
+                        Next follow-up
+                      </p>
+                      <p className="text-sm font-semibold text-white mt-1">{formatDate(contact.nextFollowUpDate)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={() => setActionsOpen(true)}
+                className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-neutral-900 font-semibold text-sm py-3 shadow-lg hover:bg-white/90 active:scale-[0.99] transition-all"
+              >
+                <SquaresFour size={18} weight="fill" />
+                Quick Actions
+              </button>
             </div>
           </div>
 
-          <div className="px-5 pt-4 pb-5 text-left">
-            {contact.categories.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {contact.categories.map(cat => (
-                  <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                    {CONTACT_CATEGORY_LABELS[cat]}
-                  </span>
-                ))}
-              </div>
-            )}
-
-          {/* At-a-glance stats */}
-          {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-            <div className={cn('grid grid-cols-2 gap-2', contact.categories.length > 0 && 'mt-4')}>
-              {contact.lastInteractionDate && (
-                <div className="rounded-xl bg-muted/60 p-3">
-                  <p className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                    <Clock size={11} />
-                    Last activity
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-1">{formatRelativeTime(contact.lastInteractionDate)}</p>
-                </div>
-              )}
-              {contact.nextFollowUpDate && (
-                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 p-3">
-                  <p className="flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-                    <Lightning size={11} weight="fill" />
-                    Next follow-up
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mt-1">{formatDate(contact.nextFollowUpDate)}</p>
-                </div>
-              )}
+          {contact.relationshipSummary && (
+            <div className="px-5 py-4 text-left">
+              <p className="text-sm text-foreground leading-relaxed">{contact.relationshipSummary}</p>
             </div>
           )}
-
-            {contact.relationshipSummary && (
-              <p className="text-sm text-foreground leading-relaxed mt-4 pt-4 border-t">{contact.relationshipSummary}</p>
-            )}
-          </div>
-        </section>
-
-        {/* Primary actions */}
-        <section>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {contact.phone && (
-              <ActionCard
-                icon={WhatsappLogo}
-                label="WhatsApp"
-                sub={contact.phone}
-                color="text-[#128C4A] dark:text-[#25D366]"
-                bg="bg-[#25D366]/12 hover:bg-[#25D366]/20"
-                onClick={() => setWhatsAppOpen(true)}
-              />
-            )}
-            {contact.phone && (
-              <ActionCard
-                icon={Phone}
-                label="Call"
-                sub={contact.phone}
-                color="text-emerald-600"
-                bg="bg-emerald-500/10 hover:bg-emerald-500/15"
-                onClick={handleCall}
-              />
-            )}
-            {contact.email && (
-              <ActionCard
-                icon={EnvelopeSimple}
-                label="Email"
-                sub={contact.email}
-                color="text-blue-600"
-                bg="bg-blue-500/10 hover:bg-blue-500/15"
-                onClick={() => setEmailOpen(true)}
-              />
-            )}
-            <ActionCard
-              icon={VideoCamera}
-              label="Video Call"
-              sub="Meet or Zoom"
-              color="text-violet-600"
-              bg="bg-violet-500/10 hover:bg-violet-500/15"
-              onClick={() => setVideoOpen(true)}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-            <ActionCard
-              icon={Note}
-              label="Notes"
-              sub={`${allNotes.length} saved`}
-              color="text-amber-600"
-              bg="bg-muted hover:bg-muted/80"
-              compact
-              onClick={() => setNotesOpen(true)}
-            />
-            <ActionCard
-              icon={Lightning}
-              label="Follow-up"
-              sub={contact.nextFollowUpDate ? formatShortDate(contact.nextFollowUpDate) : 'Set a reminder'}
-              color="text-orange-600"
-              bg="bg-muted hover:bg-muted/80"
-              compact
-              onClick={() => setFollowUpOpen(true)}
-            />
-          </div>
         </section>
 
         {/* Sub tabs */}
@@ -309,6 +284,13 @@ export default function ContactDetailClient() {
           <div className="pt-4 space-y-4">
             {tab === 'overview' && (
               <>
+                {contact.bio && (
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">About</h3>
+                    <p className="text-sm text-foreground leading-relaxed">{contact.bio}</p>
+                  </div>
+                )}
+
                 {contact.howWeKnow && (
                   <div className="rounded-2xl border bg-card p-4">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">How you know each other</h3>
@@ -340,7 +322,7 @@ export default function ContactDetailClient() {
                   </div>
                 )}
 
-                {!contact.howWeKnow && allNotes.length === 0 && allInteractions.length === 0 && (
+                {!contact.bio && !contact.howWeKnow && allNotes.length === 0 && allInteractions.length === 0 && (
                   <p className="text-xs text-muted-foreground px-1">Nothing logged yet — use the actions above to get started.</p>
                 )}
               </>
@@ -479,30 +461,8 @@ export default function ContactDetailClient() {
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} recipientName={contact.name} email={contact.email} />
       <NotesComposer open={notesOpen} onClose={() => setNotesOpen(false)} recipientName={contact.name} onSave={saveNote} />
       <VideoCallPicker open={videoOpen} onClose={() => setVideoOpen(false)} recipientName={contact.name} />
+      <ContactActionsSheet open={actionsOpen} onClose={() => setActionsOpen(false)} recipientName={contact.name} actions={quickActions} />
     </div>
-  )
-}
-
-function ActionCard({ icon: Icon, label, sub, color, bg, onClick, compact }: {
-  icon: React.ElementType
-  label: string
-  sub?: string
-  color: string
-  bg: string
-  onClick: () => void
-  compact?: boolean
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn('rounded-2xl transition-colors text-left flex gap-3', bg, compact ? 'flex-row items-center p-3' : 'flex-col p-4')}
-    >
-      <Icon size={compact ? 20 : 26} className={cn(color, 'shrink-0')} weight="fill" />
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold text-foreground">{label}</span>
-        {sub && <span className="block text-[11px] text-muted-foreground truncate">{sub}</span>}
-      </span>
-    </button>
   )
 }
 
