@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Users, Lock, MapPin, PaperPlaneTilt, Star, DotsThree, CheckCircle, WhatsappLogo } from '@phosphor-icons/react'
@@ -14,7 +14,7 @@ import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatDate, formatRelativeTime } from '@/lib/formatting'
 import { cn } from '@/lib/utils'
 import { whatsAppHref } from '@/lib/contactActions'
-import type { ContactInteraction } from '@/types/contact'
+import type { ContactInteraction, ContactNote } from '@/types/contact'
 
 export default function ContactDetailClient() {
   const params = useParams()
@@ -27,9 +27,42 @@ export default function ContactDetailClient() {
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerContext, setComposerContext] = useState<'birthday' | 'followup' | 'thankyou' | 'custom'>('custom')
 
+  const [addedNotes, setAddedNotes] = useState<ContactNote[]>([])
+  const [noteComposerOpen, setNoteComposerOpen] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const notesSectionRef = useRef<HTMLDivElement>(null)
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
+
   function openLog(type: ContactInteraction['type']) {
     setSheetType(type)
     setSheetOpen(true)
+  }
+
+  function openNoteComposer() {
+    setNoteComposerOpen(true)
+    requestAnimationFrame(() => {
+      notesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      noteTextareaRef.current?.focus()
+    })
+  }
+
+  function cancelNoteComposer() {
+    setNoteComposerOpen(false)
+    setNoteText('')
+  }
+
+  function saveNote() {
+    if (!noteText.trim() || !contact) return
+    const newNote: ContactNote = {
+      id: `note-${Date.now()}`,
+      content: noteText.trim(),
+      privacyLevel: contact.privacyLevel,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    setAddedNotes(prev => [newNote, ...prev])
+    setNoteText('')
+    setNoteComposerOpen(false)
   }
 
   if (isLoading) {
@@ -141,14 +174,14 @@ export default function ContactDetailClient() {
             </a>
           )}
           {[
-            { icon: Phone, label: 'Call', color: 'text-emerald-600', type: 'call' as const, composer: false },
-            { icon: PaperPlaneTilt, label: 'Message', color: 'text-blue-600', type: 'message' as const, composer: true },
-            { icon: Note, label: 'Note', color: 'text-amber-600', type: 'note' as const, composer: false },
-            { icon: Lightning, label: 'Follow up', color: 'text-orange-600', type: 'meeting' as const, composer: false },
-          ].map(({ icon: Icon, label, color, type, composer }) => (
+            { icon: Phone, label: 'Call', color: 'text-emerald-600', action: () => openLog('call') },
+            { icon: PaperPlaneTilt, label: 'Message', color: 'text-blue-600', action: () => (setComposerContext('custom'), setComposerOpen(true)) },
+            { icon: Note, label: 'Note', color: 'text-amber-600', action: openNoteComposer },
+            { icon: Lightning, label: 'Follow up', color: 'text-orange-600', action: () => openLog('meeting') },
+          ].map(({ icon: Icon, label, color, action }) => (
             <button
               key={label}
-              onClick={() => composer ? (setComposerContext('custom'), setComposerOpen(true)) : openLog(type)}
+              onClick={action}
               className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted hover:bg-muted/80 transition-colors"
               aria-label={label}
             >
@@ -203,14 +236,45 @@ export default function ContactDetailClient() {
         )}
 
         {/* Notes */}
-        {contact.notes.length > 0 && (
-          <div className="rounded-2xl border bg-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</h3>
-              <button onClick={() => openLog('note')} className="text-xs text-primary font-medium">+ Add note</button>
+        <div ref={notesSectionRef} className="rounded-2xl border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notes</h3>
+            {!noteComposerOpen && (
+              <button onClick={openNoteComposer} className="text-xs text-primary font-medium">+ Add note</button>
+            )}
+          </div>
+
+          {noteComposerOpen && (
+            <div className="mb-3 space-y-2">
+              <textarea
+                ref={noteTextareaRef}
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') cancelNoteComposer()
+                }}
+                placeholder={`Add a note about ${contact.name.split(' ')[0]}…`}
+                rows={3}
+                className="w-full rounded-xl bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button onClick={cancelNoteComposer} className="text-xs font-medium text-muted-foreground px-3 py-1.5 rounded-lg hover:bg-muted transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={saveNote}
+                  disabled={!noteText.trim()}
+                  className="text-xs font-medium text-primary-foreground bg-primary px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-opacity"
+                >
+                  Save
+                </button>
+              </div>
             </div>
+          )}
+
+          {[...addedNotes, ...contact.notes].length > 0 ? (
             <div className="space-y-3">
-              {contact.notes.map(note => (
+              {[...addedNotes, ...contact.notes].map(note => (
                 <div key={note.id} className={cn('rounded-xl p-3 text-sm text-foreground leading-relaxed border', note.privacyLevel === 'leader_only' ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' : 'bg-muted border-transparent')}>
                   {note.privacyLevel === 'leader_only' && (
                     <div className="flex items-center gap-1 mb-1.5">
@@ -223,8 +287,10 @@ export default function ContactDetailClient() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : !noteComposerOpen && (
+            <p className="text-xs text-muted-foreground">No notes yet.</p>
+          )}
+        </div>
 
         {/* Interaction timeline */}
         {contact.interactions.length > 0 && (
