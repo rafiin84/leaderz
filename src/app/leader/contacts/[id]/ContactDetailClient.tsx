@@ -107,7 +107,7 @@ export default function ContactDetailClient() {
   return (
     <div className="w-full max-w-3xl">
       {/* Back header */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => router.back()} className="p-2 -ml-2 rounded-xl hover:bg-muted transition-colors" aria-label="Go back">
             <ArrowLeft size={20} />
