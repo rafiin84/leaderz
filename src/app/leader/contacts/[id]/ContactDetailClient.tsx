@@ -163,13 +163,14 @@ export default function ContactDetailClient() {
           {/* Hero — identity, status and the primary CTA all live on the
               color, so the top of the page reads as one deliberate banner
               instead of a thin strip over white. */}
-          <div className="relative px-5 pt-6 pb-5 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
+          <div className="relative px-5 py-5 bg-gradient-to-br from-neutral-900 via-emerald-950 to-emerald-800">
             <div
               className="absolute inset-0 opacity-[0.12]"
               style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
             />
-            <div className="relative">
-              <div className="flex items-center gap-4">
+            <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              {/* Left: identity */}
+              <div className="flex items-center gap-4 min-w-0">
                 <Avatar
                   src={contact.avatarUrl}
                   name={contact.name}
@@ -206,45 +207,48 @@ export default function ContactDetailClient() {
                 </div>
               </div>
 
-              {contact.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-4">
-                  {contact.categories.map(cat => (
-                    <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-white/10 text-white/80 font-medium border border-white/10">
-                      {CONTACT_CATEGORY_LABELS[cat]}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Right: badges, stats, CTA */}
+              <div className="flex flex-col sm:items-end gap-2 sm:shrink-0 sm:w-56">
+                {contact.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                    {contact.categories.map(cat => (
+                      <span key={cat} className="text-xs px-2.5 py-1 rounded-full bg-white/10 text-white/80 font-medium border border-white/10">
+                        {CONTACT_CATEGORY_LABELS[cat]}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-              {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
-                <div className="flex flex-wrap items-center gap-2 mt-3">
-                  {contact.lastInteractionDate && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] text-white/70">
-                      <Clock size={11} />
-                      Last activity <span className="font-semibold text-white">{formatRelativeTime(contact.lastInteractionDate)}</span>
-                    </span>
-                  )}
-                  {contact.nextFollowUpDate && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 border border-amber-400/20 px-2.5 py-1 text-[11px] text-amber-300">
-                      <Lightning size={11} weight="fill" />
-                      Next follow-up <span className="font-semibold text-white">{formatDate(contact.nextFollowUpDate)}</span>
-                    </span>
-                  )}
-                </div>
-              )}
+                {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
+                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                    {contact.lastInteractionDate && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] text-white/70">
+                        <Clock size={11} />
+                        <span className="font-semibold text-white">{formatRelativeTime(contact.lastInteractionDate)}</span>
+                      </span>
+                    )}
+                    {contact.nextFollowUpDate && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 border border-amber-400/20 px-2.5 py-1 text-[11px] text-amber-300">
+                        <Lightning size={11} weight="fill" />
+                        <span className="font-semibold text-white">{formatDate(contact.nextFollowUpDate)}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {contact.relationshipSummary && (
-                <p className="text-xs text-white/60 leading-relaxed mt-3 pt-3 border-t border-white/10">{contact.relationshipSummary}</p>
-              )}
-
-              <button
-                onClick={() => setActionsOpen(true)}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white text-neutral-900 font-semibold text-xs px-4 py-2 shadow-md hover:bg-white/90 active:scale-[0.98] transition-all"
-              >
-                <SquaresFour size={14} weight="fill" />
-                Quick Actions
-              </button>
+                <button
+                  onClick={() => setActionsOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-neutral-900 font-semibold text-xs px-4 py-2 shadow-md hover:bg-white/90 active:scale-[0.98] transition-all"
+                >
+                  <SquaresFour size={14} weight="fill" />
+                  Quick Actions
+                </button>
+              </div>
             </div>
+
+            {contact.relationshipSummary && (
+              <p className="relative text-xs text-white/60 leading-relaxed mt-3 pt-3 border-t border-white/10">{contact.relationshipSummary}</p>
+            )}
           </div>
         </section>
 
