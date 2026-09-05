@@ -1,13 +1,24 @@
 'use client'
+import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/stores/appStore'
 import {
   useFollowers, useAISuggestions, useEvents, useUpcomingBirthdays,
   useMission, useProjects, useFollowUps,
 } from '@/queries'
 import Link from 'next/link'
-import { Phone, Lightning, CalendarBlank, Cake, Target, Sparkle } from '@phosphor-icons/react'
+import { Phone, Lightning, CalendarBlank, Cake, Target, Sparkle, X } from '@phosphor-icons/react'
 import { formatNumber, formatShortDate } from '@/lib/formatting'
 import { ImageWithFallback } from '@/components/common/ImageWithFallback'
+import { MiniCalendar } from '@/components/common/MiniCalendar'
+import type { Contact } from '@/types/contact'
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+function isSameMonthDay(a: Date, b: Date) {
+  return a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
 
 const MOCK_PHONES: Record<string, string> = {
   'f-01': '+917010012345',
@@ -36,6 +47,26 @@ export function RightPanel() {
   const { data: mission } = useMission(activeTenantId)
   const { data: projects } = useProjects(activeTenantId)
 
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const calendarRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!calendarOpen) return
+    function handlePointerDown(e: PointerEvent) {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) setCalendarOpen(false)
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setCalendarOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [calendarOpen])
+
   const topFollowers = [...(followers ?? [])]
     .sort((a, b) => (b.leaderRelationships[0]?.activityCount ?? 0) - (a.leaderRelationships[0]?.activityCount ?? 0))
     .slice(0, 3)
@@ -44,11 +75,50 @@ export function RightPanel() {
   const briefing = live.filter(s => s.type === 'briefing').slice(0, 1)
   const relationship = live.filter(s => s.type === 'relationship').slice(0, 2)
   const upcomingEvents = (events ?? []).filter(e => e.status === 'upcoming').slice(0, 2)
-  const upcomingBirthdays = (birthdays ?? []).slice(0, 2)
-  const pendingFollowUps = (followUps ?? []).slice(0, 2)
+
+  // With no date picked, show the first couple of each as a quick digest.
+  // With a date picked, show exactly what falls on that day — birthdays
+  // match month+day every year, follow-ups match the exact date.
+  const birthdaysForDay = (birthdays ?? []).filter((c: Contact) =>
+    selectedDate && c.importantDates.some(d => d.type === 'birthday' && isSameMonthDay(new Date(d.date), selectedDate))
+  )
+  const followUpsForDay = (followUps ?? []).filter((c: Contact) =>
+    selectedDate && c.nextFollowUpDate && isSameDay(new Date(c.nextFollowUpDate), selectedDate)
+  )
+  const upcomingBirthdays = selectedDate ? birthdaysForDay : (birthdays ?? []).slice(0, 2)
+  const pendingFollowUps = selectedDate ? followUpsForDay : (followUps ?? []).slice(0, 2)
 
   return (
     <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen py-6 pl-6 pr-3 overflow-y-auto scrollbar-none">
+
+      {/* Date picker — filters "Needs attention" to a specific day */}
+      <div className="flex items-center justify-end mb-3">
+        <div className="relative" ref={calendarRef}>
+          <button
+            onClick={() => setCalendarOpen(v => !v)}
+            aria-label="Pick a date"
+            className="w-8 h-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <CalendarBlank size={15} weight={selectedDate ? 'fill' : 'regular'} className={selectedDate ? 'text-primary' : 'text-muted-foreground'} />
+          </button>
+          {calendarOpen && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-64 bg-card border border-border rounded-2xl shadow-xl p-3">
+              <MiniCalendar
+                value={selectedDate}
+                onChange={date => { setSelectedDate(date); setCalendarOpen(false) }}
+              />
+              {selectedDate && (
+                <button
+                  onClick={() => { setSelectedDate(null); setCalendarOpen(false) }}
+                  className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-lg hover:bg-muted transition-colors"
+                >
+                  Clear selection
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Today's briefing */}
       {briefing.length > 0 && (
@@ -68,10 +138,28 @@ export function RightPanel() {
         </section>
       )}
 
-      {/* Needs attention — birthdays and follow-ups */}
-      {(upcomingBirthdays.length > 0 || pendingFollowUps.length > 0) && (
-        <section className="mb-6">
-          <SectionHeading>Needs attention</SectionHeading>
+      {/* Needs attention — birthdays and follow-ups, filtered to the
+          picked date when one is selected */}
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">
+            {selectedDate
+              ? `Attention · ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+              : 'Needs attention'}
+          </h3>
+          {selectedDate && (
+            <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1 text-xs text-primary font-medium">
+              <X size={11} weight="bold" />
+              Clear
+            </button>
+          )}
+        </div>
+
+        {upcomingBirthdays.length === 0 && pendingFollowUps.length === 0 ? (
+          <p className="text-xs text-muted-foreground px-1">
+            {selectedDate ? 'Nothing needs attention on this day.' : 'Nothing needs attention right now.'}
+          </p>
+        ) : (
           <div className="space-y-2">
             {upcomingBirthdays.map(c => (
               <Link
@@ -83,7 +171,7 @@ export function RightPanel() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Birthday {formatShortDate(c.importantDates[0]?.date ?? '')}
+                    Birthday {formatShortDate(c.importantDates.find(d => d.type === 'birthday')?.date ?? c.importantDates[0]?.date ?? '')}
                   </p>
                 </div>
               </Link>
@@ -102,8 +190,8 @@ export function RightPanel() {
               </Link>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* Mission */}
       {mission && (
