@@ -89,37 +89,41 @@ export function ContactListItem({ contact }: Props) {
         </Link>
       </div>
 
-      {/* Primary actions — labelled so they read as buttons */}
-      {contact.phone && (
-        <div className="flex items-center gap-2 mt-3">
-          <a
-            href={telHref(contact.phone)}
-            aria-label={`Call ${contact.name}`}
-            className={cn(
-              'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
-              'text-[13px] font-semibold border border-border',
-              'text-foreground hover:bg-muted transition-colors'
-            )}
-          >
-            <Phone size={15} weight="fill" />
-            Call
-          </a>
-          <button
-            type="button"
-            onClick={() => setWhatsAppOpen(true)}
-            aria-label={`WhatsApp ${contact.name}`}
-            className={cn(
-              'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
-              'text-[13px] font-semibold',
-              'bg-[#25D366]/12 text-[#128C4A] dark:text-[#25D366]',
-              'hover:bg-[#25D366]/20 transition-colors'
-            )}
-          >
-            <WhatsappLogo size={15} weight="fill" />
-            WhatsApp
-          </button>
-        </div>
-      )}
+      {/* Primary actions — labelled so they read as buttons. Always
+          rendered (disabled when there's no phone) so every card in the
+          grid ends up the same height. */}
+      <div className="flex items-center gap-2 mt-3">
+        <a
+          href={contact.phone ? telHref(contact.phone) : undefined}
+          aria-label={`Call ${contact.name}`}
+          aria-disabled={!contact.phone}
+          onClick={e => { if (!contact.phone) e.preventDefault() }}
+          className={cn(
+            'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
+            'text-[13px] font-semibold border border-border transition-colors',
+            contact.phone ? 'text-foreground hover:bg-muted' : 'text-muted-foreground/40 cursor-not-allowed'
+          )}
+        >
+          <Phone size={15} weight="fill" />
+          Call
+        </a>
+        <button
+          type="button"
+          disabled={!contact.phone}
+          onClick={() => setWhatsAppOpen(true)}
+          aria-label={`WhatsApp ${contact.name}`}
+          className={cn(
+            'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full',
+            'text-[13px] font-semibold transition-colors',
+            contact.phone
+              ? 'bg-[#25D366]/12 text-[#128C4A] dark:text-[#25D366] hover:bg-[#25D366]/20'
+              : 'bg-muted text-muted-foreground/40 cursor-not-allowed'
+          )}
+        >
+          <WhatsappLogo size={15} weight="fill" />
+          WhatsApp
+        </button>
+      </div>
 
       <WhatsAppComposer
         open={whatsAppOpen}

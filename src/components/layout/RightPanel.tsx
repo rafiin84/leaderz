@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@/stores/appStore'
 import {
   useFollowers, useAISuggestions, useEvents, useUpcomingBirthdays,
@@ -48,24 +48,6 @@ export function RightPanel() {
   const { data: projects } = useProjects(activeTenantId)
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const calendarRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!calendarOpen) return
-    function handlePointerDown(e: PointerEvent) {
-      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) setCalendarOpen(false)
-    }
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setCalendarOpen(false)
-    }
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [calendarOpen])
 
   const topFollowers = [...(followers ?? [])]
     .sort((a, b) => (b.leaderRelationships[0]?.activityCount ?? 0) - (a.leaderRelationships[0]?.activityCount ?? 0))
@@ -91,34 +73,18 @@ export function RightPanel() {
   return (
     <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen py-6 pl-6 pr-3 overflow-y-auto scrollbar-none">
 
-      {/* Date picker — filters "Needs attention" to a specific day */}
-      <div className="flex items-center justify-end mb-3">
-        <div className="relative" ref={calendarRef}>
+      {/* Calendar — always visible; picking a day filters "Needs attention" below */}
+      <section className="mb-6 p-3 rounded-2xl border border-border bg-card">
+        <MiniCalendar value={selectedDate} onChange={setSelectedDate} />
+        {selectedDate && (
           <button
-            onClick={() => setCalendarOpen(v => !v)}
-            aria-label="Pick a date"
-            className="w-8 h-8 rounded-full border border-border bg-card flex items-center justify-center hover:bg-muted transition-colors"
+            onClick={() => setSelectedDate(null)}
+            className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-lg hover:bg-muted transition-colors"
           >
-            <CalendarBlank size={15} weight={selectedDate ? 'fill' : 'regular'} className={selectedDate ? 'text-primary' : 'text-muted-foreground'} />
+            Clear selection
           </button>
-          {calendarOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-64 bg-card border border-border rounded-2xl shadow-xl p-3">
-              <MiniCalendar
-                value={selectedDate}
-                onChange={date => { setSelectedDate(date); setCalendarOpen(false) }}
-              />
-              {selectedDate && (
-                <button
-                  onClick={() => { setSelectedDate(null); setCalendarOpen(false) }}
-                  className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-lg hover:bg-muted transition-colors"
-                >
-                  Clear selection
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+        )}
+      </section>
 
       {/* Today's briefing */}
       {briefing.length > 0 && (

@@ -41,11 +41,11 @@ export default function OpportunitiesPage() {
 
       <div className="px-4 py-4">
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2">{[1,2,3].map(i => <Skeleton key={i} className="h-56 rounded-2xl" />)}</div>
+          <div className="grid gap-4">{[1,2,3].map(i => <Skeleton key={i} className="h-56 rounded-2xl" />)}</div>
         ) : !filtered?.length ? (
           <EmptyState icon={<Star size={48} />} title="No opportunities yet" description="Create opportunities for your followers and community." />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4">
             {filtered.map(opp => <OpportunityCard key={opp.id} opportunity={opp} />)}
           </div>
         )}
