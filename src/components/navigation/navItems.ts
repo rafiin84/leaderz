@@ -1,6 +1,6 @@
 import {
   HouseSimple, FilmStrip, AddressBook, Target, CalendarBlank,
-  Briefcase, Star, Users, ChatCircleDots, Bell,
+  Briefcase, Star, Users, ChatCircleDots, Bell, Sparkle,
 } from '@phosphor-icons/react'
 
 export interface NavItem {
@@ -13,6 +13,7 @@ export interface NavItem {
  *  sidebar and by the mobile "More" sheet so the two cannot drift apart. */
 export const NAV_ITEMS: NavItem[] = [
   { href: '/leader/home', icon: HouseSimple, label: 'Home' },
+  { href: '/leader/ai', icon: Sparkle, label: 'AI' },
   { href: '/leader/contacts', icon: AddressBook, label: 'My Contacts' },
   { href: '/leader/messages', icon: ChatCircleDots, label: 'Messages' },
   { href: '/leader/notifications', icon: Bell, label: 'Notifications' },
