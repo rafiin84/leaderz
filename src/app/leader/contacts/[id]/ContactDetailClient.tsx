@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Phone, EnvelopeSimple, Note, Lightning, Cake, Clock, Lock, MapPin,
-  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, SquaresFour, GraduationCap, CaretDown,
+  Star, DotsThree, CheckCircle, WhatsappLogo, VideoCamera, FileText, GraduationCap, Handshake,
 } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useContact } from '@/queries'
@@ -15,6 +15,7 @@ import { WhatsAppComposer } from '@/components/contacts/WhatsAppComposer'
 import { EmailComposer } from '@/components/contacts/EmailComposer'
 import { NotesComposer } from '@/components/contacts/NotesComposer'
 import { VideoCallPicker } from '@/components/contacts/VideoCallPicker'
+import { MeetingScheduler } from '@/components/contacts/MeetingScheduler'
 import { ContactActionsDropdown, type ContactAction } from '@/components/contacts/ContactActionsDropdown'
 import { CONTACT_CATEGORY_LABELS } from '@/types/contact'
 import { formatDate, formatShortDate, formatRelativeTime } from '@/lib/formatting'
@@ -46,6 +47,7 @@ export default function ContactDetailClient() {
   const [emailOpen, setEmailOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [videoOpen, setVideoOpen] = useState(false)
+  const [meetingOpen, setMeetingOpen] = useState(false)
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
 
   const [addedNotes, setAddedNotes] = useState<ContactNote[]>([])
@@ -65,6 +67,17 @@ export default function ContactDetailClient() {
     ])
     setAddedInteractions(prev => [
       { id: `int-${Date.now()}`, type: 'note', summary: content, date: now, sentiment: 'neutral' },
+      ...prev,
+    ])
+  }
+
+  function saveMeeting(date: Date, time: string, location: string, note: string) {
+    const scheduled = new Date(date)
+    const [hours, minutes] = time.split(':').map(Number)
+    scheduled.setHours(hours, minutes, 0, 0)
+    const summary = [note || 'Meeting scheduled', location && `at ${location}`].filter(Boolean).join(' ')
+    setAddedInteractions(prev => [
+      { id: `int-${Date.now()}`, type: 'meeting', summary, date: scheduled.toISOString(), sentiment: 'neutral' },
       ...prev,
     ])
   }
@@ -116,6 +129,10 @@ export default function ContactDetailClient() {
       color: 'text-violet-600', bg: 'bg-violet-500/15', onSelect: () => setVideoOpen(true),
     },
     {
+      key: 'meeting', icon: Handshake, label: 'Meeting', sub: 'Schedule with calendar',
+      color: 'text-indigo-600', bg: 'bg-indigo-500/15', onSelect: () => setMeetingOpen(true),
+    },
+    {
       key: 'notes', icon: Note, label: 'Notes', sub: `${allNotes.length} saved`,
       color: 'text-amber-600', bg: 'bg-amber-500/15', onSelect: () => setNotesOpen(true),
     },
@@ -151,12 +168,11 @@ export default function ContactDetailClient() {
 
       <div className="px-4 py-5 space-y-5">
         {/* Snapshot */}
-        {/* Hero — identity, status and the primary CTA all live on the
-            color, so the top of the page reads as one deliberate banner
-            instead of a thin strip over white. No overflow-hidden here
-            (unlike the rest of the app's cards) since the Quick Actions
-            dropdown needs to spill outside the banner's edge. */}
-        <section className="relative rounded-2xl border px-5 pt-5 pb-14 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200">
+        {/* Hero — identity, status and the primary actions all live in
+            one banner. No overflow-hidden here (unlike the rest of the
+            app's cards) since the "more actions" dropdown needs to spill
+            outside the banner's edge. */}
+        <section className="relative rounded-2xl border px-5 pt-5 pb-14" style={{ backgroundColor: '#f5f8fa' }}>
           <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             {/* Left: identity */}
             <div className="flex items-center gap-4 min-w-0">
@@ -199,7 +215,7 @@ export default function ContactDetailClient() {
                       <span
                         key={cat}
                         className="text-xs text-neutral-600 px-2.5 py-1 rounded-lg border whitespace-nowrap"
-                        style={{ borderColor: '#076f50' }}
+                        style={{ borderColor: '#c7d2d9' }}
                       >
                         {CONTACT_CATEGORY_LABELS[cat]}
                       </span>
@@ -209,7 +225,7 @@ export default function ContactDetailClient() {
               </div>
             </div>
 
-            {/* Right: stats + Quick Actions, up top */}
+            {/* Right: stats, up top */}
             <div className="flex flex-col sm:items-end gap-3 sm:shrink-0">
               {(contact.lastInteractionDate || contact.nextFollowUpDate) && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end text-xs text-neutral-500">
@@ -221,24 +237,12 @@ export default function ContactDetailClient() {
                   )}
                 </div>
               )}
-
-              <div className="relative">
-                <button
-                  onClick={() => setQuickMenuOpen(v => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900 text-white font-semibold text-xs px-4 py-2 shadow-md hover:bg-neutral-800 active:scale-[0.98] transition-all"
-                >
-                  <SquaresFour size={14} weight="fill" />
-                  Quick Actions
-                  <CaretDown size={12} weight="bold" className={cn('transition-transform', quickMenuOpen && 'rotate-180')} />
-                </button>
-                <ContactActionsDropdown open={quickMenuOpen} onClose={() => setQuickMenuOpen(false)} actions={quickActions} />
-              </div>
             </div>
           </div>
 
-          {/* Call / WhatsApp pinned to the banner's bottom-right corner */}
-          {contact.phone && (
-            <div className="absolute bottom-5 right-5 flex items-center gap-2">
+          {/* Call / WhatsApp / more, pinned to the banner's bottom-right corner */}
+          <div className="absolute bottom-5 right-5 flex items-center gap-2">
+            {contact.phone && (
               <button
                 onClick={handleCall}
                 className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white text-neutral-900 font-semibold text-xs px-3.5 py-2 hover:bg-neutral-50 active:scale-[0.98] transition-all"
@@ -246,6 +250,8 @@ export default function ContactDetailClient() {
                 <Phone size={14} weight="fill" />
                 Call
               </button>
+            )}
+            {contact.phone && (
               <button
                 onClick={() => setWhatsAppOpen(true)}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366]/15 text-[#128C4A] font-semibold text-xs px-3.5 py-2 hover:bg-[#25D366]/25 active:scale-[0.98] transition-all"
@@ -253,8 +259,18 @@ export default function ContactDetailClient() {
                 <WhatsappLogo size={14} weight="fill" />
                 WhatsApp
               </button>
+            )}
+            <div className="relative">
+              <button
+                onClick={() => setQuickMenuOpen(v => !v)}
+                aria-label="More actions"
+                className="w-9 h-9 rounded-full border border-neutral-300 bg-white flex items-center justify-center hover:bg-neutral-50 active:scale-[0.98] transition-all"
+              >
+                <DotsThree size={18} weight="bold" className="text-neutral-900" />
+              </button>
+              <ContactActionsDropdown open={quickMenuOpen} onClose={() => setQuickMenuOpen(false)} actions={quickActions} />
             </div>
-          )}
+          </div>
         </section>
 
         {/* Sub tabs */}
@@ -466,6 +482,7 @@ export default function ContactDetailClient() {
       <EmailComposer open={emailOpen} onClose={() => setEmailOpen(false)} recipientName={contact.name} email={contact.email} />
       <NotesComposer open={notesOpen} onClose={() => setNotesOpen(false)} recipientName={contact.name} onSave={saveNote} />
       <VideoCallPicker open={videoOpen} onClose={() => setVideoOpen(false)} recipientName={contact.name} />
+      <MeetingScheduler open={meetingOpen} onClose={() => setMeetingOpen(false)} recipientName={contact.name} onSave={saveMeeting} />
     </div>
   )
 }
