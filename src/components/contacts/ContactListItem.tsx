@@ -30,7 +30,7 @@ export function ContactListItem({ contact }: Props) {
   const [whatsAppOpen, setWhatsAppOpen] = useState(false)
 
   return (
-    <div className="group min-w-0 rounded-2xl border bg-muted/40 p-4 transition-colors hover:bg-muted/60 hover:border-foreground/20">
+    <div className="group min-w-0 h-full flex flex-col rounded-2xl border bg-muted/40 p-4 transition-colors hover:bg-muted/60 hover:border-foreground/20">
       <div className="flex items-start gap-3">
         <Link href={`/leader/contacts/${contact.id}`} className="shrink-0" aria-label={`Open ${contact.name}`}>
           <Avatar src={contact.avatarUrl} name={contact.name} size="lg" verified={contact.isPersonallyVerified} />
@@ -92,7 +92,7 @@ export function ContactListItem({ contact }: Props) {
       {/* Primary actions — labelled so they read as buttons. Always
           rendered (disabled when there's no phone) so every card in the
           grid ends up the same height. */}
-      <div className="flex items-center gap-2 mt-3">
+      <div className="flex items-center gap-2 mt-auto pt-3">
         <a
           href={contact.phone ? telHref(contact.phone) : undefined}
           aria-label={`Call ${contact.name}`}

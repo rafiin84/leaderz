@@ -196,7 +196,7 @@ export default function ContactsPage() {
                 {filtered.map((contact, i) => (
                   <motion.div
                     key={contact.id}
-                    className="min-w-0"
+                    className="min-w-0 h-full"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.025, 0.3) }}
