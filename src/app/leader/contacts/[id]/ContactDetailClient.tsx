@@ -175,17 +175,32 @@ export default function ContactDetailClient() {
         <section className="relative rounded-2xl border px-5 pt-5 pb-14" style={{ backgroundColor: '#f5f8fa' }}>
           <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             {/* Left: identity */}
-            <div className="flex items-start gap-3 min-w-0">
-              <Avatar
-                src={contact.avatarUrl}
-                name={contact.name}
-                size="lg"
-                verified={contact.isPersonallyVerified}
-                className="ring-4 ring-black/10 shadow-lg shrink-0 mt-0.5"
-              />
+            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+              {/* Avatar prop, not just className, drives the actual size classes
+                  (they live on an inner span), so it can't be made responsive
+                  with one instance — render small-on-mobile / big-on-desktop
+                  as two instances instead. */}
+              <span className="sm:hidden">
+                <Avatar
+                  src={contact.avatarUrl}
+                  name={contact.name}
+                  size="lg"
+                  verified={contact.isPersonallyVerified}
+                  className="ring-4 ring-black/10 shadow-lg shrink-0 mt-0.5"
+                />
+              </span>
+              <span className="hidden sm:inline-flex">
+                <Avatar
+                  src={contact.avatarUrl}
+                  name={contact.name}
+                  size="2xl"
+                  verified={contact.isPersonallyVerified}
+                  className="ring-4 ring-black/10 shadow-lg shrink-0"
+                />
+              </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-neutral-900 leading-tight">{contact.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{contact.name}</h2>
                   {contact.isFavorite && <Star size={16} className="text-amber-400" weight="fill" />}
                 </div>
                 {(contact.title || contact.organization) && (
