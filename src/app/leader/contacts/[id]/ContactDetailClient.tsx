@@ -210,7 +210,7 @@ export default function ContactDetailClient() {
                   )}
                 </div>
                 {contact.categories.length > 0 && (
-                  <div className="flex items-center gap-1.5 mt-2">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 mt-2">
                     {contact.categories.map(cat => (
                       <span
                         key={cat}
