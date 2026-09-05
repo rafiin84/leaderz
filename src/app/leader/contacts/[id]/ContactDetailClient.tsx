@@ -175,21 +175,21 @@ export default function ContactDetailClient() {
         <section className="relative rounded-2xl border px-5 pt-5 pb-14" style={{ backgroundColor: '#f5f8fa' }}>
           <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             {/* Left: identity */}
-            <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-start gap-3 min-w-0">
               <Avatar
                 src={contact.avatarUrl}
                 name={contact.name}
-                size="2xl"
+                size="lg"
                 verified={contact.isPersonallyVerified}
-                className="ring-4 ring-black/10 shadow-lg shrink-0"
+                className="ring-4 ring-black/10 shadow-lg shrink-0 mt-0.5"
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-2xl font-bold text-neutral-900">{contact.name}</h2>
-                  {contact.isFavorite && <Star size={17} className="text-amber-400" weight="fill" />}
+                  <h2 className="text-xl font-bold text-neutral-900 leading-tight">{contact.name}</h2>
+                  {contact.isFavorite && <Star size={16} className="text-amber-400" weight="fill" />}
                 </div>
                 {(contact.title || contact.organization) && (
-                  <p className="text-sm text-neutral-500 mt-0.5">
+                  <p className="text-sm text-neutral-500 mt-0.5 leading-snug">
                     {contact.title}
                     {contact.title && contact.organization && ' · '}
                     {contact.organization && <span className="font-medium text-neutral-700">{contact.organization}</span>}

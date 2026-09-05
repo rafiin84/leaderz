@@ -11,9 +11,13 @@ import { useNotifications, useLeader } from '@/queries'
 import { Avatar } from '@/components/common/Avatar'
 import { NAV_ITEMS, MOBILE_PRIMARY_HREFS, type NavItem } from './navItems'
 
-const PRIMARY: NavItem[] = MOBILE_PRIMARY_HREFS
-  .map(href => NAV_ITEMS.find(i => i.href === href))
-  .filter((i): i is NavItem => Boolean(i))
+// Same 4 destinations as before, but ordered to match the desktop sidebar
+// (NAV_ITEMS) instead of a separately-curated sequence — filtering NAV_ITEMS
+// down to the primary set, rather than mapping the primary hrefs to items,
+// is what keeps the two orders in sync automatically.
+const PRIMARY: NavItem[] = NAV_ITEMS.filter(i => MOBILE_PRIMARY_HREFS.includes(i.href))
+/** Everything else — shown in the "More" sheet, so it isn't duplicated there. */
+const MORE_ITEMS: NavItem[] = NAV_ITEMS.filter(i => !MOBILE_PRIMARY_HREFS.includes(i.href))
 
 export function LeaderBottomNav() {
   const pathname = usePathname()
@@ -157,7 +161,7 @@ export function LeaderBottomNav() {
 
               <div className="overflow-y-auto px-3 py-3" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
                 <div className="grid grid-cols-3 gap-1">
-                  {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+                  {MORE_ITEMS.map(({ href, icon: Icon, label }) => {
                     const isActive = pathname.startsWith(href)
                     return (
                       <Link
