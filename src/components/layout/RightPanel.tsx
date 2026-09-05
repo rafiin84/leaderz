@@ -47,7 +47,7 @@ export function RightPanel() {
   const { data: mission } = useMission(activeTenantId)
   const { data: projects } = useProjects(activeTenantId)
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date())
 
   const topFollowers = [...(followers ?? [])]
     .sort((a, b) => (b.leaderRelationships[0]?.activityCount ?? 0) - (a.leaderRelationships[0]?.activityCount ?? 0))

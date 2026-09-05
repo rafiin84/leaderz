@@ -18,7 +18,7 @@ export default function OpportunitiesPage() {
   const filtered = filter ? opportunities?.filter(o => o.type === filter) : opportunities
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b">
         <div className="flex items-center gap-3 px-4 py-3">
           <Star size={20} className="text-primary" weight="fill" />

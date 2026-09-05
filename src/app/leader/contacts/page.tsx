@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { MagnifyingGlass, AddressBook, Plus, ShieldCheck, Lock, X, SquaresFour, Rows, MapPin, CaretDown } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
@@ -34,12 +35,31 @@ export default function ContactsPage() {
   const [selectedState, setSelectedState] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
   const [locationOpen, setLocationOpen] = useState(false)
-  const locationRef = useRef<HTMLDivElement>(null)
+  const [locationPos, setLocationPos] = useState({ top: 0, left: 0 })
+  const locationButtonRef = useRef<HTMLButtonElement>(null)
+  const locationPanelRef = useRef<HTMLDivElement>(null)
 
+  function toggleLocationOpen() {
+    if (!locationOpen && locationButtonRef.current) {
+      const rect = locationButtonRef.current.getBoundingClientRect()
+      setLocationPos({ top: rect.bottom + 8, left: rect.left })
+    }
+    setLocationOpen(v => !v)
+  }
+
+  // The trigger button lives inside a horizontally-scrolling pills row, whose
+  // overflow-x also clips overflow-y — so the panel is portaled to <body> and
+  // positioned fixed from the button's rect instead of nesting inside it.
   useEffect(() => {
     if (!locationOpen) return
     function handlePointerDown(e: PointerEvent) {
-      if (locationRef.current && !locationRef.current.contains(e.target as Node)) setLocationOpen(false)
+      const target = e.target as Node
+      if (
+        locationButtonRef.current && !locationButtonRef.current.contains(target) &&
+        locationPanelRef.current && !locationPanelRef.current.contains(target)
+      ) {
+        setLocationOpen(false)
+      }
     }
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setLocationOpen(false)
@@ -195,17 +215,22 @@ export default function ContactsPage() {
             three rows otherwise. */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-none">
           {/* State/district filter */}
-          <div className="relative shrink-0" ref={locationRef}>
+          <div className="relative shrink-0">
             <button
-              onClick={() => setLocationOpen(v => !v)}
+              ref={locationButtonRef}
+              onClick={toggleLocationOpen}
               className={cn(pill(Boolean(selectedState)), 'inline-flex items-center gap-1')}
             >
               <MapPin size={11} weight={selectedState ? 'fill' : 'regular'} />
               {selectedDistrict ?? selectedState ?? 'Location'}
               <CaretDown size={10} weight="bold" className={cn('transition-transform', locationOpen && 'rotate-180')} />
             </button>
-            {locationOpen && (
-              <div className="absolute left-0 top-full mt-2 z-50 w-72 max-h-80 overflow-y-auto bg-card border border-border rounded-2xl shadow-xl p-2">
+            {locationOpen && createPortal(
+              <div
+                ref={locationPanelRef}
+                style={{ position: 'fixed', top: locationPos.top, left: locationPos.left }}
+                className="z-50 w-72 max-h-80 overflow-y-auto bg-card border border-border rounded-2xl shadow-xl p-2"
+              >
                 <button
                   onClick={() => selectState(null)}
                   className={cn(
@@ -253,7 +278,8 @@ export default function ContactsPage() {
                     )}
                   </div>
                 ))}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
 
