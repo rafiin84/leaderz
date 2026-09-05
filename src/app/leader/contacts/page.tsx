@@ -1,7 +1,7 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MagnifyingGlass, AddressBook, Plus, ShieldCheck, Lock, X, SquaresFour, Rows } from '@phosphor-icons/react'
+import { MagnifyingGlass, AddressBook, Plus, ShieldCheck, Lock, X, SquaresFour, Rows, MapPin, CaretDown } from '@phosphor-icons/react'
 import { useAppStore } from '@/stores/appStore'
 import { useUIStore } from '@/stores/uiStore'
 import { useContacts } from '@/queries'
@@ -15,12 +15,42 @@ import { cn } from '@/lib/utils'
 /** The Personal tab is its own filter rather than a category pill. */
 type Tab = 'all' | 'personal' | ContactCategory
 
+/** Contact locations are free-text "District, State" (a couple are just a
+ *  state/UT with no district, e.g. "New Delhi"). */
+function parseLocation(location?: string): { district?: string; state: string } | null {
+  if (!location) return null
+  const parts = location.split(',').map(p => p.trim()).filter(Boolean)
+  if (parts.length === 0) return null
+  if (parts.length === 1) return { state: parts[0] }
+  return { district: parts[0], state: parts[parts.length - 1] }
+}
+
 export default function ContactsPage() {
   const { activeTenantId, userRole } = useAppStore()
   const { contactSearchQuery, setContactSearch } = useUIStore()
   const { data: contacts, isLoading } = useContacts(activeTenantId, userRole)
   const [tab, setTab] = useState<Tab>('all')
   const [view, setView] = useState<'cards' | 'table'>('table')
+  const [selectedState, setSelectedState] = useState<string | null>(null)
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
+  const [locationOpen, setLocationOpen] = useState(false)
+  const locationRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!locationOpen) return
+    function handlePointerDown(e: PointerEvent) {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) setLocationOpen(false)
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLocationOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [locationOpen])
 
   /** Only the leader gets a Personal tab. The data layer already withholds
    *  leader_only contacts from every other role, so this hides a tab that
@@ -41,6 +71,37 @@ export default function ContactsPage() {
     return [...set].sort((a, b) => CONTACT_CATEGORY_LABELS[a].localeCompare(CONTACT_CATEGORY_LABELS[b]))
   }, [contacts])
 
+  /** States (and their districts) actually present in the contact list. */
+  const statesToDistricts = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const c of contacts ?? []) {
+      const loc = parseLocation(c.location)
+      if (!loc) continue
+      if (!map.has(loc.state)) map.set(loc.state, new Set())
+      if (loc.district) map.get(loc.state)!.add(loc.district)
+    }
+    return map
+  }, [contacts])
+
+  const states = useMemo(
+    () => [...statesToDistricts.keys()].sort((a, b) => a.localeCompare(b)),
+    [statesToDistricts]
+  )
+  const districtsForSelectedState = useMemo(
+    () => (selectedState ? [...(statesToDistricts.get(selectedState) ?? [])].sort((a, b) => a.localeCompare(b)) : []),
+    [statesToDistricts, selectedState]
+  )
+
+  function selectState(state: string | null) {
+    setSelectedState(state)
+    setSelectedDistrict(null)
+    if (!state || (statesToDistricts.get(state)?.size ?? 0) === 0) setLocationOpen(false)
+  }
+  function selectDistrict(district: string | null) {
+    setSelectedDistrict(district)
+    setLocationOpen(false)
+  }
+
   const filtered = useMemo(() => {
     const q = contactSearchQuery.trim().toLowerCase()
     return (contacts ?? []).filter(c => {
@@ -48,6 +109,12 @@ export default function ContactsPage() {
       if (tab === 'all' && c.categories.includes('personal')) return false
       if (tab === 'personal' && !c.categories.includes('personal')) return false
       if (tab !== 'all' && tab !== 'personal' && !c.categories.includes(tab)) return false
+      if (selectedState || selectedDistrict) {
+        const loc = parseLocation(c.location)
+        if (!loc) return false
+        if (selectedState && loc.state !== selectedState) return false
+        if (selectedDistrict && loc.district !== selectedDistrict) return false
+      }
       if (!q) return true
       return (
         c.name.toLowerCase().includes(q) ||
@@ -56,7 +123,7 @@ export default function ContactsPage() {
         c.location?.toLowerCase().includes(q)
       )
     })
-  }, [contacts, contactSearchQuery, tab])
+  }, [contacts, contactSearchQuery, tab, selectedState, selectedDistrict])
 
   const pill = (active: boolean) =>
     cn(
@@ -127,6 +194,69 @@ export default function ContactsPage() {
         {/* One scrolling line — the category set is long enough to wrap onto
             three rows otherwise. */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-none">
+          {/* State/district filter */}
+          <div className="relative shrink-0" ref={locationRef}>
+            <button
+              onClick={() => setLocationOpen(v => !v)}
+              className={cn(pill(Boolean(selectedState)), 'inline-flex items-center gap-1')}
+            >
+              <MapPin size={11} weight={selectedState ? 'fill' : 'regular'} />
+              {selectedDistrict ?? selectedState ?? 'Location'}
+              <CaretDown size={10} weight="bold" className={cn('transition-transform', locationOpen && 'rotate-180')} />
+            </button>
+            {locationOpen && (
+              <div className="absolute left-0 top-full mt-2 z-50 w-72 max-h-80 overflow-y-auto bg-card border border-border rounded-2xl shadow-xl p-2">
+                <button
+                  onClick={() => selectState(null)}
+                  className={cn(
+                    'w-full text-left text-sm px-2.5 py-2 rounded-xl hover:bg-muted transition-colors',
+                    !selectedState && 'text-primary font-medium'
+                  )}
+                >
+                  All locations
+                </button>
+                {states.map(state => (
+                  <div key={state}>
+                    <button
+                      onClick={() => selectState(state)}
+                      className={cn(
+                        'w-full text-left text-sm px-2.5 py-2 rounded-xl hover:bg-muted transition-colors',
+                        selectedState === state && !selectedDistrict && 'text-primary font-medium'
+                      )}
+                    >
+                      {state}
+                    </button>
+                    {selectedState === state && districtsForSelectedState.length > 0 && (
+                      <div className="pl-4 pb-1">
+                        <button
+                          onClick={() => selectDistrict(null)}
+                          className={cn(
+                            'w-full text-left text-xs px-2.5 py-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground',
+                            !selectedDistrict && 'text-primary font-medium'
+                          )}
+                        >
+                          All of {state}
+                        </button>
+                        {districtsForSelectedState.map(district => (
+                          <button
+                            key={district}
+                            onClick={() => selectDistrict(district)}
+                            className={cn(
+                              'w-full text-left text-xs px-2.5 py-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground',
+                              selectedDistrict === district && 'text-primary font-medium'
+                            )}
+                          >
+                            {district}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button onClick={() => setTab('all')} className={pill(tab === 'all')}>
             All
           </button>
@@ -188,6 +318,7 @@ export default function ContactsPage() {
             <p className="text-xs text-muted-foreground mb-3">
               {filtered.length} contact{filtered.length !== 1 ? 's' : ''}
               {tab !== 'all' && tab !== 'personal' && ` in ${CONTACT_CATEGORY_LABELS[tab]}`}
+              {selectedDistrict ? ` in ${selectedDistrict}, ${selectedState}` : selectedState ? ` in ${selectedState}` : ''}
             </p>
             {view === 'table' ? (
               <ContactTable contacts={filtered} />
