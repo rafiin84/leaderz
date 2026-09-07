@@ -3,6 +3,7 @@ import { DesktopSidebar } from '@/components/navigation/DesktopSidebar'
 import { PostComposer } from '@/components/content/PostComposer'
 import { LeaderShell } from '@/components/layout/LeaderShell'
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 export default function LeaderLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function LeaderLayout({ children }: { children: React.ReactNode }
       </div>
       <PostComposer />
       <NotificationDrawer />
+      <NotificationBell />
     </div>
   )
 }

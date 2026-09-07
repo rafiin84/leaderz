@@ -1,6 +1,6 @@
 import {
   HouseSimple, FilmStrip, AddressBook, Target, CalendarBlank,
-  Briefcase, Star, Users, ChatCircleDots, Bell, Sparkle,
+  Briefcase, Star, Users, ChatCircleDots, Sparkle,
 } from '@phosphor-icons/react'
 
 export interface NavItem {
@@ -16,7 +16,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/leader/contacts', icon: AddressBook, label: 'My Contacts' },
   { href: '/leader/ai', icon: Sparkle, label: 'AI' },
   { href: '/leader/messages', icon: ChatCircleDots, label: 'Messages' },
-  { href: '/leader/notifications', icon: Bell, label: 'Notifications' },
   { href: '/leader/reels', icon: FilmStrip, label: 'Reels' },
   { href: '/leader/mission', icon: Target, label: 'Mission' },
   { href: '/leader/followers', icon: Users, label: 'Followers' },
