@@ -82,6 +82,11 @@ export default function ContactsPage() {
     [contacts]
   )
 
+  const allCount = useMemo(
+    () => (contacts ?? []).filter(c => !c.categories.includes('personal')).length,
+    [contacts]
+  )
+
   /** Category pills, excluding personal — it has its own tab. */
   const categories = useMemo(() => {
     const set = new Set<ContactCategory>()
@@ -283,8 +288,13 @@ export default function ContactsPage() {
             )}
           </div>
 
-          <button onClick={() => setTab('all')} className={pill(tab === 'all')}>
+          <button onClick={() => setTab('all')} className={cn(pill(tab === 'all'), 'inline-flex items-center gap-1.5')}>
             All
+            {allCount > 0 && (
+              <span className={cn('tabular-nums', tab === 'all' ? 'text-background/70' : 'text-foreground/40')}>
+                {allCount}
+              </span>
+            )}
           </button>
 
           {canSeePersonal && (
@@ -341,11 +351,6 @@ export default function ContactsPage() {
           />
         ) : (
           <>
-            <p className="text-xs text-muted-foreground mb-3">
-              {filtered.length} contact{filtered.length !== 1 ? 's' : ''}
-              {tab !== 'all' && tab !== 'personal' && ` in ${CONTACT_CATEGORY_LABELS[tab]}`}
-              {selectedDistrict ? ` in ${selectedDistrict}, ${selectedState}` : selectedState ? ` in ${selectedState}` : ''}
-            </p>
             {view === 'table' ? (
               <ContactTable contacts={filtered} />
             ) : (
