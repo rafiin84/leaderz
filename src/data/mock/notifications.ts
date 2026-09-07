@@ -2,7 +2,7 @@ import type { Notification, AISuggestion } from '@/types/common'
 
 export const MOCK_NOTIFICATIONS: Record<string, Notification[]> = {
   'tenant-sridhar': [
-    { id: 'notif-1', tenantId: 'tenant-sridhar', type: 'birthday', title: 'Birthday tomorrow', body: 'N. Ram\'s birthday is tomorrow — July 9th. Send a personal note?', actorId: 'c-001', actorName: 'N. Ram', read: false, createdAt: '2026-08-29T08:00:00Z' },
+    { id: 'notif-1', tenantId: 'tenant-sridhar', type: 'birthday', title: 'Birthday tomorrow', body: 'Anand Mahindra\'s birthday is tomorrow — May 1st. Send a personal note?', actorId: 'c-001', actorName: 'Anand Mahindra', read: false, createdAt: '2026-08-29T08:00:00Z' },
     { id: 'notif-2', tenantId: 'tenant-sridhar', type: 'followup', title: 'Follow-up due', body: 'You were meant to follow up with Murugan Rajan (District Collector, Tuticorin) about the innovation hub land allocation.', actorId: 'c-005', actorName: 'Murugan Rajan', read: false, createdAt: '2026-08-30T07:00:00Z' },
     { id: 'notif-3', tenantId: 'tenant-sridhar', type: 'follow', title: '142 new followers this week', body: '142 people followed you this week, including 18 from Thoothukudi district.', read: false, createdAt: '2026-08-29T09:00:00Z' },
     { id: 'notif-4', tenantId: 'tenant-sridhar', type: 'project', title: 'Stellar Dynamics gaining traction', body: 'The Stellar Dynamics project profile received 2,400 views in the past 48 hours after your post.', targetId: 'project-stellar', targetType: 'project', read: false, createdAt: '2026-08-29T10:30:00Z' },
