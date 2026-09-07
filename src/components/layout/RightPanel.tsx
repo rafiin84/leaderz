@@ -73,90 +73,87 @@ export function RightPanel() {
   return (
     <aside className="hidden xl:flex flex-col w-72 shrink-0 sticky top-0 h-screen py-6 pl-6 pr-3 overflow-y-auto scrollbar-none">
 
-      {/* Calendar — always visible; picking a day filters "Needs attention" below */}
-      <section className="mb-6 p-3 rounded-2xl border border-border bg-card">
-        <MiniCalendar value={selectedDate} onChange={setSelectedDate} />
-        {selectedDate && (
-          <button
-            onClick={() => setSelectedDate(null)}
-            className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-lg hover:bg-muted transition-colors"
-          >
-            Clear selection
-          </button>
-        )}
-      </section>
-
-      {/* Today's briefing */}
-      {briefing.length > 0 && (
-        <section className="mb-6">
-          <SectionHeading>Today&rsquo;s briefing</SectionHeading>
-          {briefing.map(s => (
-            <div key={s.id} className="p-3 rounded-xl border border-border bg-card">
-              <div className="flex items-start gap-2">
-                <Sparkle size={13} weight="fill" className="text-foreground/40 mt-0.5 shrink-0" />
-                <div className="min-w-0">
-                  {/* No title here: it would repeat the section heading above. */}
-                  <p className="text-xs text-muted-foreground leading-relaxed">{s.body}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* Needs attention — birthdays and follow-ups, filtered to the
-          picked date when one is selected */}
-      <section className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">
-            {selectedDate
-              ? `Attention · ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-              : 'Needs attention'}
-          </h3>
+      {/* Calendar, today's briefing and needs-attention all live in one
+          card — picking a day filters the attention list below. */}
+      <section className="mb-6 rounded-2xl border border-border bg-card shrink-0">
+        <div className="p-3">
+          <MiniCalendar value={selectedDate} onChange={setSelectedDate} />
           {selectedDate && (
-            <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1 text-xs text-primary font-medium">
-              <X size={11} weight="bold" />
-              Clear
+            <button
+              onClick={() => setSelectedDate(null)}
+              className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-lg hover:bg-muted transition-colors"
+            >
+              Clear selection
             </button>
           )}
         </div>
 
-        {upcomingBirthdays.length === 0 && pendingFollowUps.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">
-            {selectedDate ? 'Nothing needs attention on this day.' : 'Nothing needs attention right now.'}
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {upcomingBirthdays.map(c => (
-              <Link
-                key={`bday-${c.id}`}
-                href={`/leader/contacts/${c.id}`}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 transition-colors"
-              >
-                <Cake size={15} weight="fill" className="text-rose-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Birthday {formatShortDate(c.importantDates.find(d => d.type === 'birthday')?.date ?? c.importantDates[0]?.date ?? '')}
-                  </p>
-                </div>
-              </Link>
-            ))}
-            {pendingFollowUps.map(c => (
-              <Link
-                key={`fu-${c.id}`}
-                href={`/leader/contacts/${c.id}`}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 transition-colors"
-              >
-                <Lightning size={15} weight="fill" className="text-amber-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{c.nextFollowUpNote ?? 'Follow up needed'}</p>
-                </div>
-              </Link>
+        {briefing.length > 0 && (
+          <div className="px-3 pb-3 pt-3 border-t border-border">
+            <h3 className="text-xs font-semibold text-foreground/40 uppercase tracking-wider mb-2">Today&rsquo;s briefing</h3>
+            {briefing.map(s => (
+              <div key={s.id} className="flex items-start gap-2">
+                <Sparkle size={13} weight="fill" className="text-foreground/40 mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">{s.body}</p>
+              </div>
             ))}
           </div>
         )}
+
+        {/* Needs attention — birthdays and follow-ups, filtered to the
+            picked date when one is selected */}
+        <div className="px-3 pb-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-foreground/40 uppercase tracking-wider">
+              {selectedDate
+                ? `Attention · ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : 'Needs attention'}
+            </h3>
+            {selectedDate && (
+              <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1 text-xs text-primary font-medium">
+                <X size={11} weight="bold" />
+                Clear
+              </button>
+            )}
+          </div>
+
+          {upcomingBirthdays.length === 0 && pendingFollowUps.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1">
+              {selectedDate ? 'Nothing needs attention on this day.' : 'Nothing needs attention right now.'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {upcomingBirthdays.map(c => (
+                <Link
+                  key={`bday-${c.id}`}
+                  href={`/leader/contacts/${c.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <Cake size={15} weight="fill" className="text-rose-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Birthday {formatShortDate(c.importantDates.find(d => d.type === 'birthday')?.date ?? c.importantDates[0]?.date ?? '')}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+              {pendingFollowUps.map(c => (
+                <Link
+                  key={`fu-${c.id}`}
+                  href={`/leader/contacts/${c.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <Lightning size={15} weight="fill" className="text-amber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.nextFollowUpNote ?? 'Follow up needed'}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Mission */}
